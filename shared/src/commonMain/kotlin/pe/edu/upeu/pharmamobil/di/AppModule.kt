@@ -21,13 +21,15 @@ import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.IniciarSesionUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ListarClientesUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ObtenerProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.RecuperarSesionUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarClienteUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
 import pe.edu.upeu.pharmamobil.presentation.cliente.ClienteViewModel
-import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
-import pe.edu.upeu.pharmamobil.domain.usecase.ObtenerProductoUseCase
-import pe.edu.upeu.pharmamobil.domain.usecase.RecuperarSesionUseCase
 import pe.edu.upeu.pharmamobil.presentation.detalle.DetalleProductoViewModel
+import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
+import pe.edu.upeu.pharmamobil.presentation.sesion.SesionViewModel
+
 private const val CATEGORIA_POR_DEFECTO = 21L
 
 val dataModule = module {

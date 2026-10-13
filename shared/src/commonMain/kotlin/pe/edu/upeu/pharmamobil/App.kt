@@ -8,18 +8,22 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.koin.compose.KoinContext
 import org.koin.compose.viewmodel.koinViewModel
@@ -51,12 +56,32 @@ import pe.edu.upeu.pharmamobil.presentation.cliente.ClienteViewModel
 import pe.edu.upeu.pharmamobil.presentation.detalle.DetalleProductoScreen
 import pe.edu.upeu.pharmamobil.presentation.detalle.DetalleProductoViewModel
 import pe.edu.upeu.pharmamobil.presentation.inicio.InicioScreen
+import pe.edu.upeu.pharmamobil.presentation.sesion.LoginScreen
+import pe.edu.upeu.pharmamobil.presentation.sesion.SesionViewModel
+import pe.edu.upeu.pharmamobil.domain.model.Sesion
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoScreen
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
 import pe.edu.upeu.pharmamobil.theme.PharmaMobilTheme
 
 @Composable
 fun App() = KoinContext {
+    val sesionVm: SesionViewModel = koinViewModel()
+    val ui by sesionVm.uiState.collectAsStateWithLifecycle()
+    val sesion = ui.sesion
+
+    when {
+        ui.verificando -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        sesion == null -> PharmaMobilTheme {
+            LoginScreen(ui, sesionVm::onUsuarioChange, sesionVm::onClaveChange, sesionVm::iniciar)
+        }
+        else -> ContenidoPrincipal(sesion, sesionVm::cerrar)
+    }
+}
+
+@Composable
+private fun ContenidoPrincipal(sesion: Sesion, onCerrarSesion: () -> Unit) {
 
     var pantallaActual by remember {
         mutableStateOf<Screen>(Screen.Inicio)
@@ -128,26 +153,28 @@ fun App() = KoinContext {
                         }
                     )
 
-                    NavigationDrawerItem(
-                        label = {
-                            Text("Clientes")
-                        },
-                        selected = pantallaActual is Screen.Clientes,
-                        onClick = {
+                    if (sesion.puede("CLIENTES_LEER")) {
+                        NavigationDrawerItem(
+                            label = {
+                                Text("Clientes")
+                            },
+                            selected = pantallaActual is Screen.Clientes,
+                            onClick = {
 
-                            pantallaActual = Screen.Clientes
+                                pantallaActual = Screen.Clientes
 
-                            scope.launch {
-                                drawerState.close()
+                                scope.launch {
+                                    drawerState.close()
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Clientes"
+                                )
                             }
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Clientes"
-                            )
-                        }
-                    )
+                        )
+                    }
 
                     NavigationDrawerItem(
                         label = {
@@ -187,6 +214,13 @@ fun App() = KoinContext {
                                 contentDescription = "Acerca de"
                             )
                         }
+                    )
+
+                    NavigationDrawerItem(
+                        label = { Text("Cerrar sesión (${sesion.usuario})") },
+                        selected = false,
+                        onClick = { scope.launch { drawerState.close() }; onCerrarSesion() },
+                        icon = { Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Cerrar sesión") }
                     )
 
                     Spacer(
@@ -281,13 +315,14 @@ fun App() = KoinContext {
                                     .padding(paddingValues)
                             ) {
 
-                                val productoViewModel: ProductoViewModel = koinViewModel()
+                                val productoViewModel: ProductoViewModel = koinViewModel(key = sesion.usuario)
 
                                 ProductoScreen(
                                     viewModel = productoViewModel,
                                     onVerDetalle = { id ->
                                         pantallaActual = Screen.DetalleProducto(id)
-                                    }
+                                    },
+                                    puedeEscribir = sesion.puede("CATALOGO_ESCRIBIR")
                                 )
                             }
                         }
@@ -299,7 +334,7 @@ fun App() = KoinContext {
                                     .padding(paddingValues)
                             ) {
 
-                                val detalleViewModel: DetalleProductoViewModel = koinViewModel()
+                                val detalleViewModel: DetalleProductoViewModel = koinViewModel(key = sesion.usuario)
 
                                 DetalleProductoScreen(
                                     productoId = screen.productoId,
@@ -316,7 +351,7 @@ fun App() = KoinContext {
                                     .padding(paddingValues)
                             ) {
 
-                                val clienteViewModel: ClienteViewModel = koinViewModel()
+                                val clienteViewModel: ClienteViewModel = koinViewModel(key = sesion.usuario)
 
                                 ClienteScreen(
                                     viewModel = clienteViewModel

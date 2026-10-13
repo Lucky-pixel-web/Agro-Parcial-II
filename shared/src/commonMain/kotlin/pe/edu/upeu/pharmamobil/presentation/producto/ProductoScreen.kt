@@ -50,6 +50,7 @@ import pe.edu.upeu.pharmamobil.presentation.producto.ProductoUiState.Operacion
 fun ProductoScreen(
     viewModel: ProductoViewModel,
     onVerDetalle: (Long) -> Unit = {},
+    puedeEscribir: Boolean = true,
     modifier: Modifier = Modifier
 ) {
 
@@ -70,15 +71,17 @@ fun ProductoScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
-        FormularioProductoCard(
-            formulario = uiState.formulario,
-            guardando = guardando,
-            onNombreChange = viewModel::onNombreChange,
-            onPrecioChange = viewModel::onPrecioChange,
-            onStockChange = viewModel::onStockChange,
-            onGuardar = viewModel::guardar,
-            onCancelar = viewModel::cancelarEdicion
-        )
+        if (puedeEscribir) {
+            FormularioProductoCard(
+                formulario = uiState.formulario,
+                guardando = guardando,
+                onNombreChange = viewModel::onNombreChange,
+                onPrecioChange = viewModel::onPrecioChange,
+                onStockChange = viewModel::onStockChange,
+                onGuardar = viewModel::guardar,
+                onCancelar = viewModel::cancelarEdicion
+            )
+        }
 
         uiState.mensajeExito?.let {
             MensajeExito(it)
