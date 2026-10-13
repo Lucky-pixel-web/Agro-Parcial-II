@@ -16,6 +16,7 @@ kotlin = "2.4.10"
 material3 = "1.11.0-alpha07"
 ktor = "3.6.0"
 kotlinxSerialization = "1.7.3"
+androidx-security-crypto = "1.1.0-alpha06"
 
 [libraries]
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
@@ -47,6 +48,8 @@ compose-material3 = { module = "org.jetbrains.compose.material3:material3", vers
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
 compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "composeMultiplatform" }
 compose-uiToolingPreview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "composeMultiplatform" }
+ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
+androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "androidx-security-crypto" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

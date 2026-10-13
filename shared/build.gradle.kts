@@ -46,6 +46,7 @@ kotlin {
             implementation(libs.compose.uiTooling)
             api(libs.koin.android)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.androidx.security.crypto)
         }
         commonMain.dependencies {
             api(libs.koin.core)
@@ -67,6 +68,7 @@ kotlin {
             implementation(libs.ktor.client.logging)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.koin.core)
+            implementation(libs.ktor.client.auth)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
