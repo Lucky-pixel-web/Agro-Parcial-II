@@ -48,7 +48,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.koin.compose.KoinContext
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.qualifier.named
+import pe.edu.upeu.pharmamobil.domain.model.Sesion
 import pe.edu.upeu.pharmamobil.navigation.Screen
 import pe.edu.upeu.pharmamobil.presentation.acercade.AcercaDeScreen
 import pe.edu.upeu.pharmamobil.presentation.cliente.ClienteScreen
@@ -56,11 +59,11 @@ import pe.edu.upeu.pharmamobil.presentation.cliente.ClienteViewModel
 import pe.edu.upeu.pharmamobil.presentation.detalle.DetalleProductoScreen
 import pe.edu.upeu.pharmamobil.presentation.detalle.DetalleProductoViewModel
 import pe.edu.upeu.pharmamobil.presentation.inicio.InicioScreen
-import pe.edu.upeu.pharmamobil.presentation.sesion.LoginScreen
-import pe.edu.upeu.pharmamobil.presentation.sesion.SesionViewModel
-import pe.edu.upeu.pharmamobil.domain.model.Sesion
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoScreen
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
+import pe.edu.upeu.pharmamobil.presentation.sesion.LoginScreen
+import pe.edu.upeu.pharmamobil.presentation.sesion.PanelPruebasSesion
+import pe.edu.upeu.pharmamobil.presentation.sesion.SesionViewModel
 import pe.edu.upeu.pharmamobil.theme.PharmaMobilTheme
 
 @Composable
@@ -68,13 +71,21 @@ fun App() = KoinContext {
     val sesionVm: SesionViewModel = koinViewModel()
     val ui by sesionVm.uiState.collectAsStateWithLifecycle()
     val sesion = ui.sesion
+    val esDepuracion: Boolean = koinInject(named("esDepuracion"))
 
     when {
         ui.verificando -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
         sesion == null -> PharmaMobilTheme {
-            LoginScreen(ui, sesionVm::onUsuarioChange, sesionVm::onClaveChange, sesionVm::iniciar)
+            Box(Modifier.fillMaxSize()) {
+                LoginScreen(ui, sesionVm::onUsuarioChange, sesionVm::onClaveChange, sesionVm::iniciar)
+                if (esDepuracion) {
+                    Box(Modifier.align(Alignment.BottomCenter)) {
+                        PanelPruebasSesion()
+                    }
+                }
+            }
         }
         else -> ContenidoPrincipal(sesion, sesionVm::cerrar)
     }
@@ -82,6 +93,7 @@ fun App() = KoinContext {
 
 @Composable
 private fun ContenidoPrincipal(sesion: Sesion, onCerrarSesion: () -> Unit) {
+    val esDepuracion: Boolean = koinInject(named("esDepuracion"))
 
     var pantallaActual by remember {
         mutableStateOf<Screen>(Screen.Inicio)
@@ -248,6 +260,10 @@ private fun ContenidoPrincipal(sesion: Sesion, onCerrarSesion: () -> Unit) {
                                 darkTheme = it
                             }
                         )
+                    }
+
+                    if (esDepuracion) {
+                        PanelPruebasSesion()
                     }
                 }
             }
