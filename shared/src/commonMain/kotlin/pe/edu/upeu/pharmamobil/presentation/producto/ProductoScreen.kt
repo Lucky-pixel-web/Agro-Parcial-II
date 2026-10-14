@@ -162,6 +162,7 @@ fun ProductoScreen(
                                 ProductoItem(
                                     producto = producto,
                                     eliminando = eliminando,
+                                    puedeEscribir = puedeEscribir,
                                     onEditar = { viewModel.editar(producto) },
                                     onEliminar = { viewModel.eliminar(producto.id) },
                                     onVerDetalle = { onVerDetalle(producto.id) }
@@ -317,6 +318,7 @@ private fun EncabezadoInventario(
 private fun ProductoItem(
     producto: ProductoUi,
     eliminando: Boolean,
+    puedeEscribir: Boolean,
     onEditar: () -> Unit,
     onEliminar: () -> Unit,
     onVerDetalle: () -> Unit
@@ -384,25 +386,27 @@ private fun ProductoItem(
                 }
             }
 
-            IconButton(
-                onClick = onEditar,
-                modifier = Modifier.size(40.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Editar ${producto.nombre}"
-                )
-            }
+            if (puedeEscribir) {
+                IconButton(
+                    onClick = onEditar,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar ${producto.nombre}"
+                    )
+                }
 
-            IconButton(
-                onClick = onEliminar,
-                enabled = !eliminando,
-                modifier = Modifier.size(40.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Eliminar ${producto.nombre}"
-                )
+                IconButton(
+                    onClick = onEliminar,
+                    enabled = !eliminando,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Eliminar ${producto.nombre}"
+                    )
+                }
             }
         }
     }

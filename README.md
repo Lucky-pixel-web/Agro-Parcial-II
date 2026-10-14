@@ -252,3 +252,26 @@ Inventario de lo que baja al source set de cada plataforma. Todo lo demás vive 
 Otras piezas específicas de plataforma que no son `expect`: `androidApp/.../MainApplication.kt` (arranca Koin con `androidContext`), `androidApp/.../MainActivity.kt`, `iosMain/.../di/KoinIos.kt` (`initKoinIos`), `iosMain/.../MainViewController.kt` y los archivos Swift de `iosApp`.
 
 Regla de aislamiento: `commonMain` no contiene ninguna importación `import android.` ni `import platform.`. Resultado observado en Android: `NumberFormat` devuelve `S/ 6.20` con un espacio duro (código 160) entre el símbolo y el número.
+
+
+
+
+
+## Autenticación (JWT)
+
+PharmaMobil inicia sesión contra `POST /api/v1/auth/login` (PharmaSoft). El token se adjunta con el
+plugin `Auth` de Ktor y se guarda cifrado: `EncryptedSharedPreferences` en Android y Keychain en iOS
+(`AlmacenSeguro`, registrado en el `platformModule` de cada plataforma).
+
+- Logging de Ktor solo en depuración y con la cabecera `Authorization` saneada.
+- 401: se borra el token y se vuelve al login con un aviso. 403: se mantiene la sesión y se avisa.
+- La interfaz oculta acciones según los permisos (`sesion.puede("...")`).
+- El token dura 3600 s y no se renueva: al expirar hay que iniciar sesión de nuevo.
+
+### Usuarios de prueba
+
+| Usuario  | Contraseña  | Rol        | Permisos                                 |
+|----------|-------------|------------|------------------------------------------|
+| admin    | Admin123    | ADMIN      | Los ocho permisos                        |
+| vendedor | Vendedor123 | VENDEDOR   | Catálogo solo lectura; clientes y ventas |
+| almacen  | Almacen123  | ALMACENERO | Solo catálogo (leer y escribir)          |
