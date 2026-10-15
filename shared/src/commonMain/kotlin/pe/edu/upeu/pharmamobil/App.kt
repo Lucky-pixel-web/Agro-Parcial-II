@@ -65,6 +65,12 @@ import pe.edu.upeu.pharmamobil.presentation.sesion.LoginScreen
 import pe.edu.upeu.pharmamobil.presentation.sesion.PanelPruebasSesion
 import pe.edu.upeu.pharmamobil.presentation.sesion.SesionViewModel
 import pe.edu.upeu.pharmamobil.theme.PharmaMobilTheme
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
+import pe.edu.upeu.pharmamobil.presentation.sesion.DialogoResultadoPrueba
+import pe.edu.upeu.pharmamobil.presentation.sesion.EventoSesion
+import pe.edu.upeu.pharmamobil.presentation.sesion.MOSTRAR_PANEL_PRUEBAS
+import pe.edu.upeu.pharmamobil.presentation.sesion.ResultadoSesionOverlay
 
 @Composable
 fun App() = KoinContext {
@@ -72,22 +78,35 @@ fun App() = KoinContext {
     val ui by sesionVm.uiState.collectAsStateWithLifecycle()
     val sesion = ui.sesion
     val esDepuracion: Boolean = koinInject(named("esDepuracion"))
+    val mostrarPanel = esDepuracion && MOSTRAR_PANEL_PRUEBAS
 
-    when {
-        ui.verificando -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+    var evento by remember { mutableStateOf<EventoSesion?>(null) }
+    LaunchedEffect(Unit) { sesionVm.eventos.collect { evento = it } }
+    LaunchedEffect(evento) {
+        if (evento != null) {
+            delay(1400)
+            evento = null
         }
-        sesion == null -> PharmaMobilTheme {
-            Box(Modifier.fillMaxSize()) {
-                LoginScreen(ui, sesionVm::onUsuarioChange, sesionVm::onClaveChange, sesionVm::iniciar)
-                if (esDepuracion) {
-                    Box(Modifier.align(Alignment.BottomCenter)) {
-                        PanelPruebasSesion()
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        when {
+            ui.verificando -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            sesion == null -> PharmaMobilTheme {
+                Box(Modifier.fillMaxSize()) {
+                    LoginScreen(ui, sesionVm::onUsuarioChange, sesionVm::onClaveChange, sesionVm::iniciar)
+                    if (mostrarPanel) {
+                        Box(Modifier.align(Alignment.BottomCenter)) { PanelPruebasSesion() }
                     }
                 }
             }
+            else -> ContenidoPrincipal(sesion, sesionVm::cerrar)
         }
-        else -> ContenidoPrincipal(sesion, sesionVm::cerrar)
+        PharmaMobilTheme {
+            ResultadoSesionOverlay(evento)
+            if (mostrarPanel) DialogoResultadoPrueba() }
     }
 }
 

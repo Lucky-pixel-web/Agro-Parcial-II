@@ -17,6 +17,8 @@ class SesionViewModel(
 
     private val _ui = MutableStateFlow(SesionUiState())
     val uiState: StateFlow<SesionUiState> = _ui.asStateFlow()
+    private val _eventos = MutableSharedFlow<EventoSesion>(extraBufferCapacity = 1)
+    val eventos: SharedFlow<EventoSesion> = _eventos.asSharedFlow()
 
     init {
         viewModelScope.launch {
@@ -47,10 +49,13 @@ class SesionViewModel(
         viewModelScope.launch {
             _ui.update { it.copy(cargando = true, error = null) }
             try {
-                manager.iniciar(iniciarSesion(Credenciales(s.usuario.trim(), s.clave)))
+                val nueva = iniciarSesion(Credenciales(s.usuario.trim(), s.clave))
+                manager.iniciar(nueva)
                 _ui.update { it.copy(cargando = false, clave = "") }
+                _eventos.tryEmit(EventoSesion.Ingreso(nueva.nombreCompleto))
             } catch (e: ErrorSesionException) {
                 _ui.update { it.copy(cargando = false, error = e.message) }
+                _eventos.tryEmit(EventoSesion.Rechazado(e.message ?: "No se pudo iniciar sesión."))
             }
         }
     }
@@ -60,6 +65,7 @@ class SesionViewModel(
             cerrarSesion()
             manager.cerrar()
             _ui.update { it.copy(usuario = "", clave = "", error = null) }
+            _eventos.tryEmit(EventoSesion.Cierre)
         }
     }
 }

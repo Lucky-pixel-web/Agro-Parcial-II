@@ -11,6 +11,7 @@ import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.LogLevel.HEADERS
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.http.ContentType
@@ -43,7 +44,7 @@ fun crearHttpClient(
     }
 
     install(Logging) {
-        level = if (esDepuracion) LogLevel.HEADERS else LogLevel.NONE
+        level = if (esDepuracion) HEADERS else LogLevel.NONE
         sanitizeHeader { nombre -> nombre == HttpHeaders.Authorization }
         logger = object : Logger {
             override fun log(message: String) { println("KtorClient: $message") }
