@@ -29,11 +29,16 @@ import pe.edu.upeu.pharmamobil.presentation.cliente.ClienteViewModel
 import pe.edu.upeu.pharmamobil.presentation.detalle.DetalleProductoViewModel
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
 import pe.edu.upeu.pharmamobil.presentation.sesion.SesionViewModel
+import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriver
+import pe.edu.upeu.pharmamobil.db.PharmaDb
 
 private const val CATEGORIA_POR_DEFECTO = 21L
 
 val dataModule = module {
     single { SesionManager() }
+    single(createdAtStart = true) {
+        PharmaDb(get<CreadorDeDriver>().crear()).also { it.productoQueries.listarTodos().executeAsList() }
+    }
     single {
         val manager = get<SesionManager>()
         crearHttpClient(get(), get(named("urlBase")), get(), get(named("esDepuracion"))) { manager.expirar() }

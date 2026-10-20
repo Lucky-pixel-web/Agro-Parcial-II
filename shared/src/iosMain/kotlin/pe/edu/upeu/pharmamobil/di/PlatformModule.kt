@@ -11,11 +11,14 @@ import pe.edu.upeu.pharmamobil.domain.platform.Compartidor
 import pe.edu.upeu.pharmamobil.platform.CompartidorIos
 import pe.edu.upeu.pharmamobil.data.local.AlmacenSeguro
 import pe.edu.upeu.pharmamobil.data.local.AlmacenSeguroIos
+import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriver
+import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriverIos
 
 actual val platformModule: Module = module {
     single<HttpClientEngine> { Darwin.create() }
     single(named("urlBase")) { "http://localhost:8080/api/v1/" }
     single<Compartidor> { CompartidorIos() }
     single<AlmacenSeguro> { AlmacenSeguroIos() }
+    single<CreadorDeDriver> { CreadorDeDriverIos() }
     single(named("esDepuracion")) { kotlin.native.Platform.isDebugBinary }
 }
