@@ -3,6 +3,7 @@ CREATE TABLE producto (
     nombre     TEXT    NOT NULL,
     precio     REAL    NOT NULL,
     stock      INTEGER NOT NULL,
+    activo     INTEGER NOT NULL DEFAULT 1,
     pendiente  INTEGER NOT NULL DEFAULT 0
 );
 
@@ -14,10 +15,15 @@ SELECT * FROM producto WHERE pendiente = 1;
 
 insertar:
 INSERT OR REPLACE INTO producto
-VALUES (?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?);
 
 borrarSincronizados:
 DELETE FROM producto WHERE pendiente = 0;
 
+borrarPorId:
+DELETE FROM producto WHERE id = ?;
+
 siguienteIdLocal:
+-- COALESCE evita el NULL de la tabla vacía; el minOf de Kotlin
+-- garantiza que el id resultante sea siempre negativo.
 SELECT COALESCE(MIN(id), 0) FROM producto;
