@@ -5,12 +5,11 @@ import pe.edu.upeu.pharmamobil.data.mapper.toRequest
 import pe.edu.upeu.pharmamobil.data.remote.ProductoApi
 import pe.edu.upeu.pharmamobil.data.remote.ejecutarLlamada
 import pe.edu.upeu.pharmamobil.domain.model.Producto
-import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
 
 class ProductoRepositorioRest(
     private val api: ProductoApi,
     private val categoriaPorDefecto: Long
-) : ProductoRepository {
+) : ProductoRemoto {
 
     override suspend fun listar(): List<Producto> =
         ejecutarLlamada { api.listar().contenido.map { it.toDomain() } }.getOrThrow()

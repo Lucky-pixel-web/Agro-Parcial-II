@@ -6,6 +6,8 @@ import pe.edu.upeu.pharmamobil.domain.error.ErrorApiException
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
 import kotlin.random.Random
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 class ProductoRepositorioEnMemoria : ProductoRepository {
 
@@ -51,4 +53,7 @@ class ProductoRepositorioEnMemoria : ProductoRepository {
         if (indice < 0) throw ErrorApiException(ErrorApi.NoEncontrado)
         productos[indice] = productos[indice].copy(activo = false)
     }
+    override fun observar(): Flow<List<Producto>> = flow { emit(listar()) }
+
+    override suspend fun sincronizar() {}
 }

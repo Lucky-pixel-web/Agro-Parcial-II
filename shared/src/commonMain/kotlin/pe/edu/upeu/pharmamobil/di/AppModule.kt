@@ -31,21 +31,24 @@ import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
 import pe.edu.upeu.pharmamobil.presentation.sesion.SesionViewModel
 import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriver
 import pe.edu.upeu.pharmamobil.db.PharmaDb
+import pe.edu.upeu.pharmamobil.data.local.ProductoLocal
+import pe.edu.upeu.pharmamobil.data.repository.ProductoRemoto
+import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioOffline
 
 private const val CATEGORIA_POR_DEFECTO = 21L
 
 val dataModule = module {
     single { SesionManager() }
-    single(createdAtStart = true) {
-        PharmaDb(get<CreadorDeDriver>().crear()).also { it.productoQueries.listarTodos().executeAsList() }
-    }
+    single { PharmaDb(get<CreadorDeDriver>().crear()) }
     single {
         val manager = get<SesionManager>()
         crearHttpClient(get(), get(named("urlBase")), get(), get(named("esDepuracion"))) { manager.expirar() }
     }
     single<AuthRepository> { AuthRepositorioRest(get(), get()) }
     single { ProductoApi(get()) }
-    single<ProductoRepository> { ProductoRepositorioRest(get(), CATEGORIA_POR_DEFECTO) }
+    single { ProductoLocal(get()) }
+    single<ProductoRepository> { ProductoRepositorioOffline(get(), get()) }
+    single<ProductoRemoto> { ProductoRepositorioRest(get(), CATEGORIA_POR_DEFECTO) }
     single<ClienteRepository> { ClienteRepositorioEnMemoria() }
 }
 

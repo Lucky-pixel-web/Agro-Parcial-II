@@ -5,6 +5,8 @@ import pe.edu.upeu.pharmamobil.domain.error.ErrorApi
 import pe.edu.upeu.pharmamobil.domain.error.ErrorApiException
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class FakeProductoRepository(
     private val productos: MutableList<Producto> = mutableListOf()
@@ -13,7 +15,6 @@ class FakeProductoRepository(
     var fallaAlListar: Throwable? = null
     var fallaAlRegistrar: Throwable? = null
 
-    /* Mientras la compuerta no se complete, la operación queda detenida a mitad de camino. */
     var compuertaListar: CompletableDeferred<Unit>? = null
     var compuertaEliminar: CompletableDeferred<Unit>? = null
 
@@ -29,6 +30,7 @@ class FakeProductoRepository(
         fallaAlRegistrar?.let { throw it }
         val guardado = producto.copy(id = siguienteId++)
         productos.add(guardado)
+        emitir()
         return guardado
     }
 
@@ -47,6 +49,7 @@ class FakeProductoRepository(
         val indice = productos.indexOfFirst { it.id == producto.id }
         if (indice < 0) throw ErrorApiException(ErrorApi.NoEncontrado)
         productos[indice] = producto
+        emitir()
         return producto
     }
 
@@ -55,5 +58,20 @@ class FakeProductoRepository(
         val indice = productos.indexOfFirst { it.id == id }
         if (indice < 0) throw ErrorApiException(ErrorApi.NoEncontrado)
         productos[indice] = productos[indice].copy(activo = false)
+        emitir()
+    }
+    private val flujo = MutableStateFlow(productos.toList())
+    private fun emitir() { flujo.value = productos.toList() }
+
+    var vecesQueSeLlamoSincronizar: Int = 0
+        private set
+
+    override fun observar(): Flow<List<Producto>> = flujo
+
+    override suspend fun sincronizar() {
+        vecesQueSeLlamoSincronizar++
+        compuertaListar?.await()
+        fallaAlListar?.let { throw it }
+        emitir()
     }
 }
