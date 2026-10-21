@@ -275,3 +275,32 @@ plugin `Auth` de Ktor y se guarda cifrado: `EncryptedSharedPreferences` en Andro
 | admin    | Admin123    | ADMIN      | Los ocho permisos                        |
 | vendedor | Vendedor123 | VENDEDOR   | Catálogo solo lectura; clientes y ventas |
 | almacen  | Almacen123  | ALMACENERO | Solo catálogo (leer y escribir)          |
+
+
+## Persistencia offline-first
+
+La app lista y registra productos aunque no haya red. La base local (SQLDelight, `pharma.db`) es la única fuente de verdad: la pantalla solo observa un `Flow` de esa base y nunca espera a la red.
+
+**Flujo de sincronización** (`ProductoRepositorioOffline.sincronizar()`):
+1. Sube cada producto pendiente al backend y borra su copia local temporal.
+2. Descarga la lista del servidor y reemplaza solo las filas ya sincronizadas.
+   El orden importa: si se descargara primero, el producto subido aparecería duplicado hasta la siguiente sincronización.
+
+**Decisiones de diseño**
+- Los productos creados sin conexión usan un id local negativo y `pendiente = 1`; el servidor les asigna el id real al subirlos.
+- La tabla incluye `activo` (la guía no lo traía y la pestaña «Inactivos» lo necesita).
+- `borrarPorId` elimina la copia local tras subirla; sin eso, cada sincronización duplicaría el producto.
+- `registrar` guarda en local y luego intenta sincronizar; si falla por red (`SinConexion` o `TiempoAgotado`), queda pendiente.
+
+**Cómo probar**
+1. Entra con conexión y deja que cargue la lista.
+2. Activa el modo avión, reabre la app: la lista sigue visible con el aviso «Sin conexión».
+3. Registra un producto: aparece al instante.
+4. Desactiva el modo avión y pulsa el botón de sincronizar: el producto queda en el servidor con id positivo, sin duplicados.
+
+**Pruebas:** `.\gradlew.bat :shared:testAndroidHostTest` (base SQLite en memoria; en `androidHostTest` porque el driver JDBC solo existe en JVM).
+
+**Limitaciones conocidas**
+- Actualizar y eliminar requieren conexión (solo registrar funciona offline).
+- No hay resolución de conflictos entre dispositivos.
+- El código de iOS (`NativeSqliteDriver`) no se pudo verificar, porque el desarrollo se hizo en Windows.

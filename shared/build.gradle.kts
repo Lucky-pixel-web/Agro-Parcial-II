@@ -50,6 +50,9 @@ kotlin {
             implementation(libs.androidx.security.crypto)
             implementation(libs.sqldelight.android)
         }
+        getByName("androidHostTest").dependencies {
+            implementation(libs.sqldelight.jvm)
+        }
         commonMain.dependencies {
             api(libs.koin.core)
             implementation(libs.koin.compose)
