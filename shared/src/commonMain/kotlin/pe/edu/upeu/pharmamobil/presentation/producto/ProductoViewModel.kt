@@ -15,6 +15,7 @@ import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ObtenerProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ObservarProductosUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ObservarUltimaSincronizacionUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ProductoInvalidoException
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.SincronizarProductosUseCase
@@ -27,7 +28,8 @@ class ProductoViewModel(
     private val sincronizarProductos: SincronizarProductosUseCase,
     private val actualizarProducto: ActualizarProductoUseCase,
     private val eliminarProducto: EliminarProductoUseCase,
-    private val obtenerProducto: ObtenerProductoUseCase
+    private val obtenerProducto: ObtenerProductoUseCase,
+    private val observarUltimaSincronizacion: ObservarUltimaSincronizacionUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProductoUiState())
@@ -36,6 +38,7 @@ class ProductoViewModel(
     init {
         sincronizar()
         observarLista()
+        observarAntiguedad()
     }
 
     private fun observarLista() {
@@ -61,6 +64,14 @@ class ProductoViewModel(
                         )
                     }
                 }
+        }
+    }
+
+    private fun observarAntiguedad() {
+        viewModelScope.launch {
+            observarUltimaSincronizacion().collect { marca ->
+                _uiState.update { it.copy(ultimaSincronizacion = marca) }
+            }
         }
     }
 

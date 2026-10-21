@@ -11,8 +11,10 @@ import pe.edu.upeu.pharmamobil.domain.platform.Compartidor
 import pe.edu.upeu.pharmamobil.platform.CompartidorIos
 import pe.edu.upeu.pharmamobil.data.local.AlmacenSeguro
 import pe.edu.upeu.pharmamobil.data.local.AlmacenSeguroIos
+import pe.edu.upeu.pharmamobil.data.local.AlmacenSincronizacionIos
 import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriver
 import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriverIos
+import pe.edu.upeu.pharmamobil.domain.repository.AlmacenSincronizacion
 
 actual val platformModule: Module = module {
     single<HttpClientEngine> { Darwin.create() }
@@ -20,5 +22,6 @@ actual val platformModule: Module = module {
     single<Compartidor> { CompartidorIos() }
     single<AlmacenSeguro> { AlmacenSeguroIos() }
     single<CreadorDeDriver> { CreadorDeDriverIos() }
+    single<AlmacenSincronizacion> { AlmacenSincronizacionIos() }
     single(named("esDepuracion")) { kotlin.native.Platform.isDebugBinary }
 }

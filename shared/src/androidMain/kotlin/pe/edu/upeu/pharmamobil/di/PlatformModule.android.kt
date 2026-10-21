@@ -11,8 +11,10 @@ import pe.edu.upeu.pharmamobil.platform.CompartidorAndroid
 import pe.edu.upeu.pharmamobil.data.local.AlmacenSeguro
 import pe.edu.upeu.pharmamobil.data.local.AlmacenSeguroAndroid
 import android.content.pm.ApplicationInfo
+import pe.edu.upeu.pharmamobil.data.local.AlmacenSincronizacionAndroid
 import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriver
 import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriverAndroid
+import pe.edu.upeu.pharmamobil.domain.repository.AlmacenSincronizacion
 
 actual val platformModule: Module = module {
     single<HttpClientEngine> { OkHttp.create() }
@@ -20,6 +22,7 @@ actual val platformModule: Module = module {
     single<Compartidor> { CompartidorAndroid(androidContext()) }
     single<AlmacenSeguro> { AlmacenSeguroAndroid(androidContext()) }
     single<CreadorDeDriver> { CreadorDeDriverAndroid(androidContext()) }
+    single<AlmacenSincronizacion> { AlmacenSincronizacionAndroid(androidContext()) }
     single(named("esDepuracion")) {
         (androidContext().applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
     }

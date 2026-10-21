@@ -34,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -41,6 +42,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
+import pe.edu.upeu.pharmamobil.domain.util.ahoraEnMilisegundos
 import pe.edu.upeu.pharmamobil.presentation.components.EstadoVacio
 import pe.edu.upeu.pharmamobil.presentation.components.MensajeError
 import pe.edu.upeu.pharmamobil.presentation.components.MensajeExito
@@ -100,6 +103,8 @@ fun ProductoScreen(
             onSincronizar = viewModel::sincronizar
         )
 
+        IndicadorAntiguedad(uiState.ultimaSincronizacion)
+
         TabRow(selectedTabIndex = tabSeleccionada) {
             titulosTabs.forEachIndexed { index, titulo ->
                 Tab(
@@ -152,7 +157,11 @@ fun ProductoScreen(
                         EstadoVacio(
                             icono = Icons.Default.Inventory2,
                             titulo = "Todavía no hay productos",
-                            descripcion = "Registra el primero con el formulario de arriba.",
+                            descripcion = if (uiState.ultimaSincronizacion == null) {
+                                "Aún no se ha sincronizado. Conéctate a internet para descargar el inventario."
+                            } else {
+                                "Registra el primero con el formulario de arriba."
+                            },
                             modifier = Modifier.align(Alignment.Center)
                         )
                     }
@@ -343,6 +352,22 @@ private fun EncabezadoInventario(
 
 
 @Composable
+private fun IndicadorAntiguedad(ultima: Long?) {
+    val ahora by produceState(initialValue = ahoraEnMilisegundos(), key1 = ultima) {
+        while (true) {
+            delay(30_000)
+            value = ahoraEnMilisegundos()
+        }
+    }
+    Text(
+        text = textoAntiguedad(ultima, ahora),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+
+@Composable
 private fun ProductoItem(
     producto: ProductoUi,
     eliminando: Boolean,
@@ -355,7 +380,7 @@ private fun ProductoItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onVerDetalle)
+            .clickable(enabled = producto.id >= 0, onClick = onVerDetalle)
     ) {
 
         Row(
@@ -414,9 +439,25 @@ private fun ProductoItem(
                 }
             }
 
+            val pendiente = producto.id < 0
+            if (pendiente) {
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                ) {
+                    Text(
+                        text = "Pendiente",
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
             if (puedeEscribir) {
                 IconButton(
                     onClick = onEditar,
+                    enabled = producto.id >= 0,
                     modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
@@ -427,7 +468,7 @@ private fun ProductoItem(
 
                 IconButton(
                     onClick = onEliminar,
-                    enabled = !eliminando,
+                    enabled = !eliminando && producto.id >= 0,
                     modifier = Modifier.size(40.dp)
                 ) {
                     Icon(

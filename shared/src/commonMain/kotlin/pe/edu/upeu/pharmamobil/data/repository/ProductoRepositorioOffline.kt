@@ -8,11 +8,16 @@ import pe.edu.upeu.pharmamobil.data.local.ProductoLocal
 import pe.edu.upeu.pharmamobil.domain.error.ErrorApi
 import pe.edu.upeu.pharmamobil.domain.error.ErrorApiException
 import pe.edu.upeu.pharmamobil.domain.model.Producto
+import pe.edu.upeu.pharmamobil.domain.repository.AlmacenSincronizacion
+import pe.edu.upeu.pharmamobil.domain.repository.AlmacenSincronizacionEnMemoria
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
+import pe.edu.upeu.pharmamobil.domain.util.ahoraEnMilisegundos
 
 class ProductoRepositorioOffline(
     private val local: ProductoLocal,
-    private val remoto: ProductoRemoto
+    private val remoto: ProductoRemoto,
+    private val almacen: AlmacenSincronizacion = AlmacenSincronizacionEnMemoria(),
+    private val ahora: () -> Long = ::ahoraEnMilisegundos
 ) : ProductoRepository {
 
     private val candado = Mutex()
@@ -33,6 +38,7 @@ class ProductoRepositorioOffline(
     override suspend fun sincronizar() = candado.withLock {
         subirPendientes()
         local.reemplazarSincronizados(remoto.listar())
+        almacen.registrar(ahora())
     }
 
     override suspend fun listar(): List<Producto> {

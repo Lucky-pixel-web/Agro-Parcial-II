@@ -6,11 +6,16 @@ import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriver
+import pe.edu.upeu.pharmamobil.data.local.ProductoLocal
 import pe.edu.upeu.pharmamobil.data.remote.ProductoApi
 import pe.edu.upeu.pharmamobil.data.remote.crearHttpClient
 import pe.edu.upeu.pharmamobil.data.repository.AuthRepositorioRest
 import pe.edu.upeu.pharmamobil.data.repository.ClienteRepositorioEnMemoria
+import pe.edu.upeu.pharmamobil.data.repository.ProductoRemoto
+import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioOffline
 import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioRest
+import pe.edu.upeu.pharmamobil.db.PharmaDb
 import pe.edu.upeu.pharmamobil.domain.repository.AuthRepository
 import pe.edu.upeu.pharmamobil.domain.repository.ClienteRepository
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
@@ -21,22 +26,17 @@ import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.IniciarSesionUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ListarClientesUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ObservarProductosUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ObservarUltimaSincronizacionUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ObtenerProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RecuperarSesionUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarClienteUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.SincronizarProductosUseCase
 import pe.edu.upeu.pharmamobil.presentation.cliente.ClienteViewModel
 import pe.edu.upeu.pharmamobil.presentation.detalle.DetalleProductoViewModel
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
 import pe.edu.upeu.pharmamobil.presentation.sesion.SesionViewModel
-import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriver
-import pe.edu.upeu.pharmamobil.db.PharmaDb
-import pe.edu.upeu.pharmamobil.data.local.ProductoLocal
-import pe.edu.upeu.pharmamobil.data.repository.ProductoRemoto
-import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioOffline
-import pe.edu.upeu.pharmamobil.domain.usecase.ObservarProductosUseCase
-import pe.edu.upeu.pharmamobil.domain.usecase.SincronizarProductosUseCase
-import kotlin.coroutines.EmptyCoroutineContext.get
 
 private const val CATEGORIA_POR_DEFECTO = 21L
 
@@ -50,7 +50,7 @@ val dataModule = module {
     single<AuthRepository> { AuthRepositorioRest(get(), get()) }
     single { ProductoApi(get()) }
     single { ProductoLocal(get()) }
-    single<ProductoRepository> { ProductoRepositorioOffline(get(), get()) }
+    single<ProductoRepository> { ProductoRepositorioOffline(get(), get(), get()) }
     single<ProductoRemoto> { ProductoRepositorioRest(get(), CATEGORIA_POR_DEFECTO) }
     single<ClienteRepository> { ClienteRepositorioEnMemoria() }
 }
@@ -68,10 +68,11 @@ val domainModule = module {
     factory { CerrarSesionUseCase(get()) }
     factory { ObservarProductosUseCase(get()) }
     factory { SincronizarProductosUseCase(get()) }
+    factory { ObservarUltimaSincronizacionUseCase(get()) }
 }
 
 val presentationModule = module {
-    viewModel { ProductoViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { ProductoViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { ClienteViewModel(get(), get()) }
     viewModel { DetalleProductoViewModel(get(), get()) }
     viewModel { SesionViewModel(get(), get(), get(), get()) }
