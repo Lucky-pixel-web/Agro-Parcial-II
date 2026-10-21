@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Medication
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -91,7 +92,13 @@ fun ProductoScreen(
             MensajeError(it.mensaje)
         }
 
-        EncabezadoInventario(uiState.fase)
+        uiState.avisoRed?.let { MensajeError(it) }
+
+        EncabezadoInventario(
+            fase = uiState.fase,
+            sincronizando = uiState.sincronizando,
+            onSincronizar = viewModel::sincronizar
+        )
 
         TabRow(selectedTabIndex = tabSeleccionada) {
             titulosTabs.forEachIndexed { index, titulo ->
@@ -128,12 +135,27 @@ fun ProductoScreen(
                     }
 
                 ProductoUiState.Fase.SinProductos ->
-                    EstadoVacio(
-                        icono = Icons.Default.Inventory2,
-                        titulo = "Todavía no hay productos",
-                        descripcion = "Registra el primero con el formulario de arriba.",
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+                    if (uiState.sincronizando) {
+                        Column(
+                            modifier = Modifier.align(Alignment.Center),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            CircularProgressIndicator()
+                            Text(
+                                text = "Sincronizando inventario…",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        EstadoVacio(
+                            icono = Icons.Default.Inventory2,
+                            titulo = "Todavía no hay productos",
+                            descripcion = "Registra el primero con el formulario de arriba.",
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
 
                 is ProductoUiState.Fase.ConProductos -> {
 
@@ -286,29 +308,35 @@ private fun FormularioProductoCard(
 
 @Composable
 private fun EncabezadoInventario(
-    fase: ProductoUiState.Fase
+    fase: ProductoUiState.Fase,
+    sincronizando: Boolean,
+    onSincronizar: () -> Unit
 ) {
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-
         Text(
             text = "Inventario",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.weight(1f)
         )
-
         if (fase is ProductoUiState.Fase.ConProductos) {
-
             val cantidad = fase.productos.size
-
             Text(
                 text = if (cantidad == 1) "1 producto" else "$cantidad productos",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+        Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+            if (sincronizando) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+            } else {
+                IconButton(onClick = onSincronizar) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Sincronizar")
+                }
+            }
         }
     }
 }

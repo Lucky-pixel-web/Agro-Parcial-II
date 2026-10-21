@@ -1,30 +1,32 @@
 package pe.edu.upeu.pharmamobil.presentation.producto
 
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import pe.edu.upeu.pharmamobil.data.repository.FakeProductoRepository
+import pe.edu.upeu.pharmamobil.domain.error.ErrorApi
+import pe.edu.upeu.pharmamobil.domain.error.ErrorApiException
 import pe.edu.upeu.pharmamobil.domain.model.Producto
-import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ObtenerProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ObservarProductosUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.SincronizarProductosUseCase
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
-import kotlin.test.assertNull
-import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
-import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
 import kotlin.test.assertNotNull
-import pe.edu.upeu.pharmamobil.domain.error.ErrorApi
-import pe.edu.upeu.pharmamobil.domain.error.ErrorApiException
-import pe.edu.upeu.pharmamobil.domain.usecase.ObtenerProductoUseCase
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.cancel
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -44,7 +46,8 @@ class ProductoViewModelTest {
         repositorio: FakeProductoRepository = FakeProductoRepository()
     ) = ProductoViewModel(
         registrarProducto = RegistrarProductoUseCase(repositorio),
-        listarProductos = ListarProductosUseCase(repositorio),
+        observarProductos = ObservarProductosUseCase(repositorio),
+        sincronizarProductos = SincronizarProductosUseCase(repositorio),
         actualizarProducto = ActualizarProductoUseCase(repositorio),
         eliminarProducto = EliminarProductoUseCase(repositorio),
         obtenerProducto = ObtenerProductoUseCase(repositorio)
@@ -80,17 +83,14 @@ class ProductoViewModelTest {
     }
 
     @Test
-    fun repositorioQueLanzaExcepcionProduceFaseError() = runTest {
-
-        val repositorio = FakeProductoRepository().apply {
-            fallaAlListar = IllegalStateException("Sin conexión con el inventario")
-        }
-
-        val fase = assertIs<ProductoUiState.Fase.Error>(
-            nuevoViewModel(repositorio).uiState.value.fase
-        )
-
-        assertEquals("Sin conexión con el inventario", fase.mensaje)
+    fun sinConexionMuestraAvisoYConservaLosDatos() = runTest {
+        val repositorio = FakeProductoRepository(
+            mutableListOf(Producto(id = 1L, nombre = "Paracetamol", precio = 8.5, stock = 100))
+        ).apply { fallaAlListar = ErrorApiException(ErrorApi.SinConexion) }
+        val estado = nuevoViewModel(repositorio).uiState.value
+        assertEquals("Sin conexión: mostrando datos guardados", estado.avisoRed)
+        assertIs<ProductoUiState.Fase.ConProductos>(estado.fase)
+        assertFalse(estado.sincronizando)
     }
 
     @Test
@@ -153,6 +153,7 @@ class ProductoViewModelTest {
         assertEquals(ProductoUiState.Operacion.Inactiva, estado.operacion)
         assertNull(estado.formulario.idEnEdicion)
     }
+
     @Test
     fun validacionDelServidorSeMuestraDebajoDelCampo() = runTest {
 
@@ -200,23 +201,20 @@ class ProductoViewModelTest {
     }
 
     @Test
-    fun cargaExitosaPasaDeCargandoAConProductos() = runTest {
-
+    fun laListaSeMuestraDesdeLocalMientrasSincroniza() = runTest {
         val repositorio = FakeProductoRepository(
             mutableListOf(
                 Producto(id = 1L, nombre = "Paracetamol", precio = 8.5, stock = 100),
                 Producto(id = 2L, nombre = "Ibuprofeno", precio = 12.0, stock = 50)
             )
         ).apply { compuertaListar = CompletableDeferred() }
-
         val viewModel = nuevoViewModel(repositorio)
-
-        assertEquals(ProductoUiState.Fase.Cargando, viewModel.uiState.value.fase)
-
-        repositorio.compuertaListar!!.complete(Unit)
-
+        assertTrue(viewModel.uiState.value.sincronizando)
         val fase = assertIs<ProductoUiState.Fase.ConProductos>(viewModel.uiState.value.fase)
         assertEquals(listOf("Paracetamol", "Ibuprofeno"), fase.productos.map { it.nombre })
+        repositorio.compuertaListar!!.complete(Unit)
+        assertFalse(viewModel.uiState.value.sincronizando)
+        assertNull(viewModel.uiState.value.avisoRed)
     }
 
     @Test
@@ -240,7 +238,7 @@ class ProductoViewModelTest {
 
         val estado = viewModel.uiState.value
         assertEquals(ProductoUiState.Operacion.Inactiva, estado.operacion)
-        assertEquals(2, repositorio.vecesQueSeLlamoListar)
+        assertEquals(1, repositorio.vecesQueSeLlamoSincronizar)
 
         val fase = assertIs<ProductoUiState.Fase.ConProductos>(estado.fase)
         assertEquals(false, fase.productos.first().activo)

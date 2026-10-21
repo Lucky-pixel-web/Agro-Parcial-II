@@ -34,6 +34,9 @@ import pe.edu.upeu.pharmamobil.db.PharmaDb
 import pe.edu.upeu.pharmamobil.data.local.ProductoLocal
 import pe.edu.upeu.pharmamobil.data.repository.ProductoRemoto
 import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioOffline
+import pe.edu.upeu.pharmamobil.domain.usecase.ObservarProductosUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.SincronizarProductosUseCase
+import kotlin.coroutines.EmptyCoroutineContext.get
 
 private const val CATEGORIA_POR_DEFECTO = 21L
 
@@ -63,10 +66,12 @@ val domainModule = module {
     factory { IniciarSesionUseCase(get()) }
     factory { RecuperarSesionUseCase(get()) }
     factory { CerrarSesionUseCase(get()) }
+    factory { ObservarProductosUseCase(get()) }
+    factory { SincronizarProductosUseCase(get()) }
 }
 
 val presentationModule = module {
-    viewModel { ProductoViewModel(get(), get(), get(), get(), get()) }
+    viewModel { ProductoViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { ClienteViewModel(get(), get()) }
     viewModel { DetalleProductoViewModel(get(), get()) }
     viewModel { SesionViewModel(get(), get(), get(), get()) }

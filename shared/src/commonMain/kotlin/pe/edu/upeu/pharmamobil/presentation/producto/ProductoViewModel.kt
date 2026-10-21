@@ -5,23 +5,26 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
-import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
-import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
-import pe.edu.upeu.pharmamobil.domain.usecase.ProductoInvalidoException
-import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
-import pe.edu.upeu.pharmamobil.presentation.producto.ProductoUiState.Operacion
-import pe.edu.upeu.pharmamobil.presentation.producto.ProductoUiState.Operacion.Tipo
 import pe.edu.upeu.pharmamobil.domain.error.ErrorApi
 import pe.edu.upeu.pharmamobil.domain.error.ErrorApiException
 import pe.edu.upeu.pharmamobil.domain.error.mensajeUsuario
+import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ObtenerProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ObservarProductosUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ProductoInvalidoException
+import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.SincronizarProductosUseCase
+import pe.edu.upeu.pharmamobil.presentation.producto.ProductoUiState.Operacion
+import pe.edu.upeu.pharmamobil.presentation.producto.ProductoUiState.Operacion.Tipo
 
 class ProductoViewModel(
     private val registrarProducto: RegistrarProductoUseCase,
-    private val listarProductos: ListarProductosUseCase,
+    private val observarProductos: ObservarProductosUseCase,
+    private val sincronizarProductos: SincronizarProductosUseCase,
     private val actualizarProducto: ActualizarProductoUseCase,
     private val eliminarProducto: EliminarProductoUseCase,
     private val obtenerProducto: ObtenerProductoUseCase
@@ -31,37 +34,60 @@ class ProductoViewModel(
     val uiState: StateFlow<ProductoUiState> = _uiState.asStateFlow()
 
     init {
-        cargarProductos()
+        sincronizar()
+        observarLista()
     }
 
-    fun cargarProductos() {
+    private fun observarLista() {
         viewModelScope.launch {
-            _uiState.update { it.copy(fase = ProductoUiState.Fase.Cargando) }
-            val fase = obtenerFase()
-            _uiState.update { it.copy(fase = fase) }
+            observarProductos()
+                .catch { fallo ->
+                    _uiState.update {
+                        it.copy(
+                            fase = ProductoUiState.Fase.Error(
+                                fallo.message ?: "No se pudo leer el inventario"
+                            )
+                        )
+                    }
+                }
+                .collect { productos ->
+                    _uiState.update {
+                        it.copy(
+                            fase = if (productos.isEmpty()) {
+                                ProductoUiState.Fase.SinProductos
+                            } else {
+                                ProductoUiState.Fase.ConProductos(productos.map { p -> p.aUi() })
+                            }
+                        )
+                    }
+                }
         }
     }
 
-    private suspend fun refrescarLista() {
-        val fase = obtenerFase()
-        _uiState.update { it.copy(fase = fase) }
-    }
-
-    private suspend fun obtenerFase(): ProductoUiState.Fase =
-        listarProductos().fold(
-            onSuccess = { productos ->
-                if (productos.isEmpty()) {
-                    ProductoUiState.Fase.SinProductos
-                } else {
-                    ProductoUiState.Fase.ConProductos(productos.map { it.aUi() })
-                }
-            },
-            onFailure = { fallo ->
-                ProductoUiState.Fase.Error(
-                    fallo.message ?: "No se pudo cargar el inventario"
+    fun sincronizar() {
+        if (_uiState.value.sincronizando) return
+        _uiState.update { it.copy(sincronizando = true) }
+        viewModelScope.launch {
+            val resultado = sincronizarProductos()
+            _uiState.update {
+                it.copy(
+                    sincronizando = false,
+                    avisoRed = resultado.exceptionOrNull()?.let(::avisoDe)
                 )
             }
-        )
+        }
+    }
+
+    fun cargarProductos() = sincronizar()
+
+    private fun avisoDe(fallo: Throwable): String {
+        val error = (fallo as? ErrorApiException)?.error
+        return if (error == ErrorApi.SinConexion || error == ErrorApi.TiempoAgotado) {
+            "Sin conexión: mostrando datos guardados"
+        } else {
+            fallo.message ?: "No se pudo sincronizar"
+        }
+    }
 
     fun onNombreChange(nombre: String) {
         _uiState.update {
@@ -89,6 +115,7 @@ class ProductoViewModel(
             )
         }
     }
+
     fun editar(producto: ProductoUi) {
         if (hayOperacionEnCurso()) return
         marcarEnCurso(Tipo.Obtener)
@@ -135,7 +162,6 @@ class ProductoViewModel(
                 stock = formulario.stock
             )
                 .onSuccess { producto ->
-                    refrescarLista()
                     _uiState.update {
                         it.copy(
                             operacion = Operacion.Inactiva,
@@ -164,7 +190,6 @@ class ProductoViewModel(
                 activo = formulario.activoEnEdicion
             )
                 .onSuccess { producto ->
-                    refrescarLista()
                     _uiState.update {
                         it.copy(
                             operacion = Operacion.Inactiva,
@@ -184,7 +209,6 @@ class ProductoViewModel(
         viewModelScope.launch {
             eliminarProducto(id)
                 .onSuccess {
-                    refrescarLista()
                     _uiState.update {
                         it.copy(
                             operacion = Operacion.Inactiva,
@@ -267,5 +291,6 @@ class ProductoViewModel(
             )
         }
     }
+
     private val CAMPOS_DEL_FORMULARIO = setOf("nombre", "precio", "stock")
 }
