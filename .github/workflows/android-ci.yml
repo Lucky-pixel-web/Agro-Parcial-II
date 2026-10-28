@@ -25,7 +25,11 @@ jobs:
         uses: android-actions/setup-android@v4
 
       - name: Instalar Android API 37
-        run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
+        run: |
+          sdkmanager --install "platforms;android-37.0" "build-tools;36.0.0"
+          if [ ! -d "$ANDROID_SDK_ROOT/platforms/android-37" ] && [ -d "$ANDROID_SDK_ROOT/platforms/android-37.0" ]; then
+            ln -s "$ANDROID_SDK_ROOT/platforms/android-37.0" "$ANDROID_SDK_ROOT/platforms/android-37"
+          fi
 
       - name: Preparar Gradle
         uses: gradle/actions/setup-gradle@v4
