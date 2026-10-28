@@ -41,6 +41,10 @@ import pe.upeu.agrosierra.data.remote.AgroApi
 import pe.upeu.agrosierra.data.local.AgroLocal
 import pe.upeu.agrosierra.data.repository.AgroRepositorioOffline
 import pe.upeu.agrosierra.presentation.AgroViewModel
+import pe.upeu.agrosierra.domain.repository.AgroRepositorio
+import pe.upeu.agrosierra.domain.usecase.BuscarLotesAgroUseCase
+import pe.upeu.agrosierra.domain.usecase.RegistrarLaborAgroUseCase
+import pe.upeu.agrosierra.domain.usecase.SincronizarAgroUseCase
 private const val CATEGORIA_POR_DEFECTO = 21L
 
 val dataModule = module {
@@ -58,10 +62,13 @@ val dataModule = module {
     single<ClienteRepository> { ClienteRepositorioEnMemoria() }
     single { AgroApi(get()) }
     single { AgroLocal(get()) }
-    single { AgroRepositorioOffline(get(), get()) }
+    single<AgroRepositorio> { AgroRepositorioOffline(get(), get()) }
 }
 
 val domainModule = module {
+    factory { BuscarLotesAgroUseCase(get()) }
+    factory { RegistrarLaborAgroUseCase(get()) }
+    factory { SincronizarAgroUseCase(get()) }
     factory { ListarProductosUseCase(get()) }
     factory { RegistrarProductoUseCase(get()) }
     factory { ActualizarProductoUseCase(get()) }
@@ -82,7 +89,7 @@ val presentationModule = module {
     viewModel { ClienteViewModel(get(), get()) }
     viewModel { DetalleProductoViewModel(get(), get()) }
     viewModel { SesionViewModel(get(), get(), get(), get()) }
-    viewModel { AgroViewModel(get(), get()) }
+    viewModel { AgroViewModel(get(), get(), get(), get(), get()) }
 }
 
 expect val platformModule: Module
