@@ -426,8 +426,8 @@ private fun DetalleAgro(
             )
 
             Button(onClick = {
-                val numero = cantidad.toDoubleOrNull()
-                val numeroJornales = jornales.toIntOrNull()
+                val numero = cantidad.toDoubleOrNull() ?: 0.0
+                val numeroJornales = jornales.toIntOrNull() ?: 0
 
                 erroresLocales = validarLaborFormulario(
                     lote, tipo, fecha, cantidad, jornales, observacion
