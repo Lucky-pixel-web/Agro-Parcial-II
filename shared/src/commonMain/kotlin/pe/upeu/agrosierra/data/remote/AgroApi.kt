@@ -6,7 +6,7 @@ import io.ktor.client.call.body
 import io.ktor.client.request.*
 import pe.upeu.agrosierra.domain.model.*
 
-class AgroApi(private val cliente: HttpClient) {
+class AgroApi(private val cliente: HttpClient) : ServicioAgroRemoto {
 
     suspend fun listarLotes(
         pagina: Int = 0,
@@ -39,28 +39,28 @@ class AgroApi(private val cliente: HttpClient) {
         }.body()
     }
 
-    suspend fun crearLabor(labor: Labor): Labor = controlarErrorAgro {
+    override suspend fun crearLabor(labor: Labor): Labor = controlarErrorAgro {
         cliente.post("labores") {
             setBody(labor.aSolicitud())
         }.body<LaborDto>().aDominio()
     }
 
-    suspend fun actualizarLabor(labor: Labor): Labor = controlarErrorAgro {
+    override suspend fun actualizarLabor(labor: Labor): Labor = controlarErrorAgro {
         cliente.put("labores/${labor.id}") {
             setBody(labor.aSolicitud())
         }.body<LaborDto>().aDominio()
     }
 
-    suspend fun eliminarLabor(id: Long) = controlarErrorAgro {
+    override suspend fun eliminarLabor(id: Long) = controlarErrorAgro {
         cliente.delete("labores/$id")
         Unit
     }
 
-    suspend fun cerrarCampania(id: Long): Lote = controlarErrorAgro {
+    override suspend fun cerrarCampania(id: Long): Lote = controlarErrorAgro {
         cliente.post("lotes/$id/cerrar-campania").body<LoteDto>().aDominio()
     }
 
-    suspend fun descargarTodosLosLotes(): List<Lote> {
+    override suspend fun descargarTodosLosLotes(): List<Lote> {
         val resultado = mutableListOf<Lote>()
         var pagina = 0
 
@@ -75,7 +75,7 @@ class AgroApi(private val cliente: HttpClient) {
         return resultado
     }
 
-    suspend fun descargarTodasLasLabores(
+    override suspend fun descargarTodasLasLabores(
         loteId: Long
     ): List<Labor> {
         val resultado = mutableListOf<Labor>()
