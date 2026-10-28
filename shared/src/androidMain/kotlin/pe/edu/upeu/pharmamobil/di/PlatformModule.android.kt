@@ -15,6 +15,8 @@ import pe.edu.upeu.pharmamobil.data.local.AlmacenSincronizacionAndroid
 import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriver
 import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriverAndroid
 import pe.edu.upeu.pharmamobil.domain.repository.AlmacenSincronizacion
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import pe.upeu.agrosierra.db.AgroDb
 
 actual val platformModule: Module = module {
     single<HttpClientEngine> { OkHttp.create() }
@@ -25,5 +27,14 @@ actual val platformModule: Module = module {
     single<AlmacenSincronizacion> { AlmacenSincronizacionAndroid(androidContext()) }
     single(named("esDepuracion")) {
         (androidContext().applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    }
+    single {
+        AgroDb(
+            AndroidSqliteDriver(
+                schema = AgroDb.Schema,
+                context = androidContext(),
+                name = "agrosierra.db"
+            )
+        )
     }
 }
