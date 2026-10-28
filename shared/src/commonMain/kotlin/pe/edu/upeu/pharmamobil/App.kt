@@ -71,7 +71,7 @@ import pe.edu.upeu.pharmamobil.presentation.sesion.DialogoResultadoPrueba
 import pe.edu.upeu.pharmamobil.presentation.sesion.EventoSesion
 import pe.edu.upeu.pharmamobil.presentation.sesion.MOSTRAR_PANEL_PRUEBAS
 import pe.edu.upeu.pharmamobil.presentation.sesion.ResultadoSesionOverlay
-
+import pe.upeu.agrosierra.presentation.AgroCampoScreen
 @Composable
 fun App() = KoinContext {
     val sesionVm: SesionViewModel = koinViewModel()
@@ -102,7 +102,12 @@ fun App() = KoinContext {
                     }
                 }
             }
-            else -> ContenidoPrincipal(sesion, sesionVm::cerrar)
+            else -> PharmaMobilTheme {
+                AgroCampoScreen(
+                    sesion = sesion,
+                    onCerrarSesion = sesionVm::cerrar
+                )
+            }
         }
         PharmaMobilTheme {
             ResultadoSesionOverlay(evento)

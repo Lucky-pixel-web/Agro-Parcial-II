@@ -96,6 +96,11 @@ sqldelight {
     databases {
         create("PharmaDb") {
             packageName.set("pe.edu.upeu.pharmamobil.db")
+            srcDirs.setFrom("src/commonMain/sqldelight")
+        }
+        create("AgroDb") {
+            packageName.set("pe.upeu.agrosierra.db")
+            srcDirs.setFrom("src/commonMain/sqldelightAgro")
         }
     }
 }

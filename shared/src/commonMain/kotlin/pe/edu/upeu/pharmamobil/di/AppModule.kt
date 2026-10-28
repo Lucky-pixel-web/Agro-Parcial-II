@@ -37,7 +37,10 @@ import pe.edu.upeu.pharmamobil.presentation.cliente.ClienteViewModel
 import pe.edu.upeu.pharmamobil.presentation.detalle.DetalleProductoViewModel
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
 import pe.edu.upeu.pharmamobil.presentation.sesion.SesionViewModel
-
+import pe.upeu.agrosierra.data.remote.AgroApi
+import pe.upeu.agrosierra.data.local.AgroLocal
+import pe.upeu.agrosierra.data.repository.AgroRepositorioOffline
+import pe.upeu.agrosierra.presentation.AgroViewModel
 private const val CATEGORIA_POR_DEFECTO = 21L
 
 val dataModule = module {
@@ -53,6 +56,9 @@ val dataModule = module {
     single<ProductoRepository> { ProductoRepositorioOffline(get(), get(), get()) }
     single<ProductoRemoto> { ProductoRepositorioRest(get(), CATEGORIA_POR_DEFECTO) }
     single<ClienteRepository> { ClienteRepositorioEnMemoria() }
+    single { AgroApi(get()) }
+    single { AgroLocal(get()) }
+    single { AgroRepositorioOffline(get(), get()) }
 }
 
 val domainModule = module {
@@ -76,6 +82,7 @@ val presentationModule = module {
     viewModel { ClienteViewModel(get(), get()) }
     viewModel { DetalleProductoViewModel(get(), get()) }
     viewModel { SesionViewModel(get(), get(), get(), get()) }
+    viewModel { AgroViewModel(get()) }
 }
 
 expect val platformModule: Module
