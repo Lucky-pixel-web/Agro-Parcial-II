@@ -15,5 +15,10 @@ class AlmacenSeguroAndroid(contexto: Context) : AlmacenSeguro {
     override fun guardarToken(token: String) = prefs.edit().putString(CLAVE, token).apply()
     override fun leerToken(): String? = prefs.getString(CLAVE, null)
     override fun borrarToken() = prefs.edit().remove(CLAVE).apply()
+    override fun guardarPerfil(perfil: String) {
+        prefs.edit().putString("perfil", perfil).apply()
+    }
+    override fun leerPerfil(): String? = prefs.getString("perfil", null)
+    override fun borrarPerfil() { prefs.edit().remove("perfil").apply() }
     private companion object { const val CLAVE = "jwt" }
 }

@@ -1,0 +1,5 @@
+-- Del esquema 2 al 3. Conserva lotes, labores y sus pendientes.
+CREATE TABLE estado_sincronizacion (
+    id INTEGER NOT NULL PRIMARY KEY,
+    instanteEpochMillis INTEGER NOT NULL
+);

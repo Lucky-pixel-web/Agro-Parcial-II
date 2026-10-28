@@ -63,6 +63,7 @@ fun crearHttpClient(
                 !peticion.url.encodedPath.endsWith("/auth/login")
             ) {
                 almacen.borrarToken()
+                almacen.borrarPerfil()
                 onSesionExpirada()
             }
         }

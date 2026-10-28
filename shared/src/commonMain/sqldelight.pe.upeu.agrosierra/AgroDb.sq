@@ -1,0 +1,51 @@
+
+CREATE TABLE lote (
+    id INTEGER NOT NULL PRIMARY KEY,
+    codigo TEXT NOT NULL,
+    nombre TEXT NOT NULL,
+    hectareas REAL NOT NULL,
+    cultivo TEXT NOT NULL,
+    valle TEXT NOT NULL,
+    campaniaCerrada INTEGER NOT NULL,
+    dosisMaxima REAL NOT NULL
+);
+
+CREATE TABLE labor (
+    id INTEGER NOT NULL PRIMARY KEY,
+    loteId INTEGER NOT NULL,
+    tipo TEXT NOT NULL,
+    fecha TEXT NOT NULL,
+    responsable TEXT NOT NULL,
+    cantidad REAL NOT NULL,
+    observacion TEXT NOT NULL,
+    pendiente INTEGER NOT NULL
+);
+
+observarLotes:
+SELECT * FROM lote ORDER BY nombre;
+
+observarLaboresPorLote:
+SELECT * FROM labor
+WHERE loteId = ?
+ORDER BY fecha DESC;
+
+listarPendientes:
+SELECT * FROM labor
+WHERE pendiente = 1;
+
+siguienteIdLocal:
+SELECT COALESCE(MIN(id), 0) FROM labor;
+
+guardarLote:
+INSERT OR REPLACE INTO lote
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+guardarLabor:
+INSERT OR REPLACE INTO labor
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+borrarLaborPorId:
+DELETE FROM labor WHERE id = ?;
+
+borrarLaboresSincronizadas:
+DELETE FROM labor WHERE pendiente = 0;
