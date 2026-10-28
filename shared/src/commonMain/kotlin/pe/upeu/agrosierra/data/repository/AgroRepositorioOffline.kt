@@ -37,6 +37,9 @@ class AgroRepositorioOffline(
     fun contarPendientes(loteId: Long): Flow<Long> =
         local.contarPendientes(loteId)
 
+    fun observarPendientesPorLotes(): Flow<Map<Long, Long>> =
+        local.observarPendientesPorLotes()
+
     fun registrar(labor: Labor): Labor =
         local.guardarPendiente(labor)
 

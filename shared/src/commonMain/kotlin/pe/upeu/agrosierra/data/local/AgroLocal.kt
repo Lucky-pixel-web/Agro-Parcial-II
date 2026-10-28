@@ -66,6 +66,16 @@ class AgroLocal(private val db: AgroDb) {
             .asFlow()
             .mapToOne(Dispatchers.Default)
 
+    fun observarPendientesPorLotes(): Flow<Map<Long, Long>> =
+        q.contarPendientesPorLotes()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { filas ->
+                filas.associate { fila ->
+                    fila.loteId to fila.totalPendientes
+                }
+            }
+
     fun pendientes(): List<Labor> =
         q.listarPendientes()
             .executeAsList()

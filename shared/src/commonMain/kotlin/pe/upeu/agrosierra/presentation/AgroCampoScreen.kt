@@ -26,6 +26,8 @@ fun AgroCampoScreen(
     )
 
     val lotes by vm.lotes.collectAsStateWithLifecycle()
+    val pendientesPorLote by
+    vm.pendientesPorLote.collectAsStateWithLifecycle()
     val estado by vm.estado.collectAsStateWithLifecycle()
 
     var seleccionado by remember {
@@ -158,6 +160,10 @@ fun AgroCampoScreen(
 
             LazyColumn {
                 items(lotes, key = { it.id }) { lote ->
+
+                    val totalPendientes =
+                        pendientesPorLote[lote.id] ?: 0L
+
                     ListItem(
                         headlineContent = {
                             Text(lote.nombre)
@@ -166,13 +172,39 @@ fun AgroCampoScreen(
                             Text(
                                 "${lote.codigo} · ${lote.valle} · " +
                                         if (lote.campaniaCerrada)
-                                            "Cerrada" else "Abierta"
+                                            "Cerrada"
+                                        else
+                                            "Abierta"
                             )
+                        },
+                        trailingContent = {
+                            Column {
+                                Badge(
+                                    containerColor =
+                                        if (totalPendientes > 0)
+                                            MaterialTheme.colorScheme.error
+                                        else
+                                            MaterialTheme.colorScheme.secondaryContainer,
+                                    contentColor =
+                                        if (totalPendientes > 0)
+                                            MaterialTheme.colorScheme.onError
+                                        else
+                                            MaterialTheme.colorScheme.onSecondaryContainer
+                                ) {
+                                    Text(totalPendientes.toString())
+                                }
+
+                                Text(
+                                    "Pendientes",
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
                         },
                         modifier = Modifier.clickable {
                             seleccionado = lote
                         }
                     )
+
                     HorizontalDivider()
                 }
             }

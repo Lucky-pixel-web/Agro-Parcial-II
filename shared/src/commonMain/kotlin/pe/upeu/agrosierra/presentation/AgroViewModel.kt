@@ -44,6 +44,14 @@ class AgroViewModel(
             emptyList()
         )
 
+    val pendientesPorLote: StateFlow<Map<Long, Long>> =
+        repo.observarPendientesPorLotes()
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5000),
+                emptyMap()
+            )
+
     fun cambiarBusqueda(texto: String) {
         busqueda.value = texto
     }

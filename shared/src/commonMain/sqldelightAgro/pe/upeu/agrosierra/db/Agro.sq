@@ -91,3 +91,14 @@ AND (
     OR campaniaCerrada = 0
 )
 ORDER BY nombre;
+
+contarPendientesPorLotes:
+SELECT
+    l.id AS loteId,
+    COUNT(lb.id) AS totalPendientes
+FROM lote AS l
+LEFT JOIN labor AS lb
+    ON lb.loteId = l.id
+    AND lb.pendiente = 1
+GROUP BY l.id
+ORDER BY l.id;
