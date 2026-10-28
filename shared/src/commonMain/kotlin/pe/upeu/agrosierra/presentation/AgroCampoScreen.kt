@@ -206,6 +206,9 @@ private fun DetalleAgro(
     var cantidad by remember {
         mutableStateOf("")
     }
+    var jornales by remember {
+        mutableStateOf("1")
+    }
     var observacion by remember {
         mutableStateOf("")
     }
@@ -261,6 +264,7 @@ private fun DetalleAgro(
                 )
                 Text("Responsable: ${labor.responsable}")
                 Text("Cantidad: ${labor.cantidad}")
+                Text("Jornales: ${labor.cantidadJornales}")
 
                 if (labor.pendiente) {
                     Text("Pendiente de sincronizar")
@@ -271,6 +275,7 @@ private fun DetalleAgro(
                         edicion = labor
                         fecha = labor.fecha
                         cantidad = labor.cantidad.toString()
+                        jornales = labor.cantidadJornales.toString()
                         observacion = labor.observacion
                         tipo = labor.tipo
                     }) {
@@ -337,6 +342,17 @@ private fun DetalleAgro(
             )
 
             OutlinedTextField(
+                value = jornales,
+                onValueChange = { jornales = it },
+                label = { Text("Cantidad de jornales") },
+                isError = jornales.toIntOrNull()?.let { it < 1 } ?: true,
+                supportingText = {
+                    Text("Ingresa un número entero mayor que cero")
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
                 value = observacion,
                 onValueChange = { observacion = it },
                 label = { Text("Observación") },
@@ -345,10 +361,13 @@ private fun DetalleAgro(
 
             Button(onClick = {
                 val numero = cantidad.toDoubleOrNull()
+                val numeroJornales = jornales.toIntOrNull()
 
                 if (
                     numero != null &&
+                    numeroJornales != null &&
                     numero > 0 &&
+                    numeroJornales > 0 &&
                     fecha.isNotBlank() &&
                     observacion.isNotBlank()
                 ) {
@@ -360,6 +379,7 @@ private fun DetalleAgro(
                         responsable =
                             edicion?.responsable ?: sesion.usuario,
                         cantidad = numero,
+                        cantidadJornales = numeroJornales,
                         observacion = observacion,
                         pendiente = true
                     )
@@ -374,6 +394,7 @@ private fun DetalleAgro(
                     fecha = ""
                     cantidad = ""
                     observacion = ""
+                    jornales = "1"
                 }
             }) {
                 Text(

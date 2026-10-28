@@ -18,7 +18,8 @@ CREATE TABLE labor (
     responsable TEXT NOT NULL,
     cantidad REAL NOT NULL,
     observacion TEXT NOT NULL,
-    pendiente INTEGER NOT NULL
+    pendiente INTEGER NOT NULL,
+    cantidadJornales INTEGER NOT NULL DEFAULT 1
 );
 
 observarLotes:
@@ -41,8 +42,18 @@ INSERT OR REPLACE INTO lote
 VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 guardarLabor:
-INSERT OR REPLACE INTO labor
-VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO labor (
+    id,
+    loteId,
+    tipo,
+    fecha,
+    responsable,
+    cantidad,
+    observacion,
+    pendiente,
+    cantidadJornales
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 borrarLaborPorId:
 DELETE FROM labor WHERE id = ?;

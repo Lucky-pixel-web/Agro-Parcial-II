@@ -136,7 +136,8 @@ class AgroLocal(private val db: AgroDb) {
             labor.responsable,
             labor.cantidad,
             labor.observacion,
-            if (labor.pendiente) 1L else 0L
+            if (labor.pendiente) 1L else 0L,
+            labor.cantidadJornales.toLong()
         )
     }
 
@@ -149,6 +150,8 @@ class AgroLocal(private val db: AgroDb) {
             responsable = responsable,
             cantidad = cantidad,
             observacion = observacion,
-            pendiente = pendiente == 1L
+            pendiente = pendiente == 1L,
+            cantidadJornales = cantidadJornales.toInt()
         )
+
 }

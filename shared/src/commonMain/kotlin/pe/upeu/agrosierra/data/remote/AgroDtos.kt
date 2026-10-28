@@ -32,6 +32,7 @@ data class LoteDto(
     )
 }
 
+
 @Serializable
 data class LaborDto(
     val id: Long,
@@ -41,7 +42,8 @@ data class LaborDto(
     val responsable: String,
     val cantidad: Double,
     val observacion: String,
-    val pendiente: Boolean = false
+    val pendiente: Boolean = false,
+    val cantidadJornales: Int = 1
 ) {
     fun aDominio() = Labor(
         id = id,
@@ -51,7 +53,8 @@ data class LaborDto(
         responsable = responsable,
         cantidad = cantidad,
         observacion = observacion,
-        pendiente = false
+        pendiente = false,
+        cantidadJornales = cantidadJornales
     )
 }
 
@@ -61,7 +64,8 @@ data class LaborRequestDto(
     val tipo: String,
     val fecha: String,
     val cantidad: Double,
-    val observacion: String
+    val observacion: String,
+    val cantidadJornales: Int
 )
 
 fun Labor.aSolicitud() = LaborRequestDto(
@@ -69,5 +73,7 @@ fun Labor.aSolicitud() = LaborRequestDto(
     tipo = tipo.name,
     fecha = fecha,
     cantidad = cantidad,
-    observacion = observacion
+    observacion = observacion,
+    cantidadJornales = cantidadJornales
 )
+

@@ -9,5 +9,6 @@ data class Labor(
     val responsable: String,
     val cantidad: Double,
     val observacion: String,
-    val pendiente: Boolean
+    val pendiente: Boolean,
+    val cantidadJornales: Int = 1
 )
