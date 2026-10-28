@@ -1,0 +1,93 @@
+
+CREATE TABLE lote (
+    id INTEGER NOT NULL PRIMARY KEY,
+    codigo TEXT NOT NULL,
+    nombre TEXT NOT NULL,
+    hectareas REAL NOT NULL,
+    cultivo TEXT NOT NULL,
+    valle TEXT NOT NULL,
+    campaniaCerrada INTEGER NOT NULL,
+    dosisMaxima REAL NOT NULL
+);
+
+CREATE TABLE labor (
+    id INTEGER NOT NULL PRIMARY KEY,
+    loteId INTEGER NOT NULL,
+    tipo TEXT NOT NULL,
+    fecha TEXT NOT NULL,
+    responsable TEXT NOT NULL,
+    cantidad REAL NOT NULL,
+    observacion TEXT NOT NULL,
+    pendiente INTEGER NOT NULL,
+    cantidadJornales INTEGER NOT NULL DEFAULT 1
+);
+
+observarLotes:
+SELECT * FROM lote ORDER BY nombre;
+
+observarLaboresPorLote:
+SELECT * FROM labor
+WHERE loteId = ?
+ORDER BY fecha DESC;
+
+listarPendientes:
+SELECT * FROM labor
+WHERE pendiente = 1;
+
+siguienteIdLocal:
+SELECT COALESCE(MIN(id), 0) FROM labor;
+
+guardarLote:
+INSERT OR REPLACE INTO lote
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+guardarLabor:
+INSERT OR REPLACE INTO labor (
+    id,
+    loteId,
+    tipo,
+    fecha,
+    responsable,
+    cantidad,
+    observacion,
+    pendiente,
+    cantidadJornales
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+borrarLaborPorId:
+DELETE FROM labor WHERE id = ?;
+
+borrarLaboresSincronizadas:
+DELETE FROM labor WHERE pendiente = 0;
+
+
+
+borrarLotes:
+DELETE FROM lote;
+
+borrarLaboresDescargadas:
+DELETE FROM labor WHERE pendiente = 0;
+
+obtenerLaborPorId:
+SELECT * FROM labor WHERE id = ?;
+
+contarPendientesPorLote:
+SELECT COUNT(*) FROM labor
+WHERE loteId = ? AND pendiente = 1;
+
+buscarLotes:
+SELECT * FROM lote
+WHERE (
+    lower(nombre) LIKE '%' || lower(:texto) || '%'
+    OR lower(codigo) LIKE '%' || lower(:texto) || '%'
+)
+AND (
+    CAST(:valleFiltro AS TEXT) = ''
+    OR lower(valle) = lower(:valleFiltro)
+)
+AND (
+    CAST(:soloAbiertas AS INTEGER) = 0
+    OR campaniaCerrada = 0
+)
+ORDER BY nombre;
