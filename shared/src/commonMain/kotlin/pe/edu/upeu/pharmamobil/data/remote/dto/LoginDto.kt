@@ -1,27 +1,37 @@
+
 package pe.edu.upeu.pharmamobil.data.remote.dto
 
 import kotlinx.serialization.Serializable
 import pe.edu.upeu.pharmamobil.domain.model.Sesion
 
 @Serializable
-data class LoginRequestDto(val username: String, val password: String)
+data class LoginRequestDto(
+    val usuario: String,
+    val contrasena: String
+)
 
 @Serializable
 data class LoginResponseDto(
     val token: String,
-    val tipo: String = "Bearer",
-    val expiraEnSegundos: Long = 0,
-    val username: String,
-    val nombreCompleto: String = "",
-    val roles: List<String> = emptyList(),
-    val permisos: List<String> = emptyList()
+    val nombre: String,
+    val usuario: String,
+    val rol: String,
+    val privilegios: Set<String>
 ) {
-    fun aSesion() = Sesion(token, username, nombreCompleto, permisos.toSet())
+    fun aSesion() = Sesion(
+        token = token,
+        usuario = usuario,
+        nombreCompleto = nombre,
+        permisos = privilegios,
+        rol = rol
+    )
 }
 
 @Serializable
 data class UsuarioActualDto(
-    val username: String,
-    val empleadoNombre: String? = null,
-    val permisos: List<String> = emptyList()
+    val id: Long,
+    val usuario: String,
+    val nombre: String,
+    val rol: String,
+    val privilegios: Set<String>
 )
