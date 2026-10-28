@@ -7,6 +7,7 @@ import pe.upeu.agrosierra.data.local.AgroLocal
 import pe.upeu.agrosierra.data.remote.AgroApi
 import pe.upeu.agrosierra.domain.model.*
 import kotlinx.coroutines.flow.Flow
+import kotlin.time.Clock
 
 data class ResumenSincronizacion(
     val enviados: Int,
@@ -20,6 +21,9 @@ class AgroRepositorioOffline(
 ) {
 
     private val mutex = Mutex()
+
+    fun observarUltimaSincronizacion(): Flow<Long?> =
+        local.observarUltimaSincronizacion()
 
     fun observarLotes(): Flow<List<Lote>> =
         local.observarLotes()
@@ -84,6 +88,7 @@ class AgroRepositorioOffline(
 
             // Reemplazo atómico: conserva las filas pendientes.
             local.actualizarDesdeServidor(lotes, labores)
+            local.guardarUltimaSincronizacion(Clock.System.now().toEpochMilliseconds())
 
             ResumenSincronizacion(
                 enviados = enviados,
