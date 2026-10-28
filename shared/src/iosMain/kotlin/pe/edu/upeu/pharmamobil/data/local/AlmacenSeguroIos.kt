@@ -30,6 +30,38 @@ class AlmacenSeguroIos : AlmacenSeguro {
         SecItemDelete(consulta())
     }
 
+    override fun guardarPerfil(perfil: String) {
+        SecItemDelete(consultaPerfil())
+        val datos = CFBridgingRetain(perfil.aNSData())
+        SecItemAdd(consultaPerfil(kSecValueData to datos), null)
+        CFRelease(datos)
+    }
+
+    override fun leerPerfil(): String? = memScoped {
+        val resultado = alloc<CFTypeRefVar>()
+        val estado = SecItemCopyMatching(
+            consultaPerfil(kSecReturnData to kCFBooleanTrue, kSecMatchLimit to kSecMatchLimitOne),
+            resultado.ptr
+        )
+        if (estado != errSecSuccess) return@memScoped null
+        val datos = CFBridgingRelease(resultado.value) as? NSData ?: return@memScoped null
+        NSString.create(data = datos, encoding = NSUTF8StringEncoding)?.toString()
+    }
+
+    override fun borrarPerfil() { SecItemDelete(consultaPerfil()) }
+
+    private fun consultaPerfil(vararg extras: Pair<CFStringRef?, CFTypeRef?>): CFDictionaryRef? = memScoped {
+        val pares = listOf<Pair<CFStringRef?, CFTypeRef?>>(
+            kSecClass to kSecClassGenericPassword,
+            kSecAttrService to CFBridgingRetain("pharmamobil"),
+            kSecAttrAccount to CFBridgingRetain("perfil")
+        ) + extras
+        val llaves = allocArrayOf(*pares.map { it.first }.toTypedArray())
+        val valores = allocArrayOf(*pares.map { it.second }.toTypedArray())
+        CFDictionaryCreate(kCFAllocatorDefault, llaves.reinterpret(), valores.reinterpret(),
+            pares.size.convert(), null, null)
+    }
+
     private fun consulta(vararg extras: Pair<CFStringRef?, CFTypeRef?>): CFDictionaryRef? = memScoped {
         val pares = listOf<Pair<CFStringRef?, CFTypeRef?>>(
             kSecClass to kSecClassGenericPassword,
