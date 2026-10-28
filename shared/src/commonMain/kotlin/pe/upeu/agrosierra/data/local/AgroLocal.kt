@@ -11,11 +11,11 @@ import kotlinx.coroutines.flow.map
 import pe.upeu.agrosierra.db.AgroDb
 import pe.upeu.agrosierra.domain.model.*
 
-class AgroLocal(private val db: AgroDb) {
+class AgroLocal(private val db: AgroDb) : AlmacenAgroLocal {
 
     private val q = db.agroQueries
 
-    fun observarLotes(): Flow<List<Lote>> =
+    override fun observarLotes(): Flow<List<Lote>> =
         q.observarLotes()
             .asFlow()
             .mapToList(Dispatchers.Default)
@@ -34,7 +34,7 @@ class AgroLocal(private val db: AgroDb) {
                 }
             }
 
-    fun buscarLotes(
+    override fun buscarLotes(
         texto: String,
         valle: String,
         soloAbiertas: Boolean
@@ -56,18 +56,18 @@ class AgroLocal(private val db: AgroDb) {
                 }
             }
 
-    fun observarLabores(idLote: Long): Flow<List<Labor>> =
+    override fun observarLabores(idLote: Long): Flow<List<Labor>> =
         q.observarLaboresPorLote(idLote)
             .asFlow()
             .mapToList(Dispatchers.Default)
             .map { filas -> filas.map { it.aLabor() } }
 
-    fun contarPendientes(idLote: Long): Flow<Long> =
+    override fun contarPendientes(idLote: Long): Flow<Long> =
         q.contarPendientesPorLote(idLote)
             .asFlow()
             .mapToOne(Dispatchers.Default)
 
-    fun observarPendientesPorLotes(): Flow<Map<Long, Long>> =
+    override fun observarPendientesPorLotes(): Flow<Map<Long, Long>> =
         q.contarPendientesPorLotes()
             .asFlow()
             .mapToList(Dispatchers.Default)
@@ -77,21 +77,21 @@ class AgroLocal(private val db: AgroDb) {
                 }
             }
 
-    fun observarUltimaSincronizacion(): Flow<Long?> =
+    override fun observarUltimaSincronizacion(): Flow<Long?> =
         q.observarUltimaSincronizacion()
             .asFlow()
             .mapToOneOrNull(Dispatchers.Default)
 
-    fun guardarUltimaSincronizacion(epochMillis: Long) {
+    override fun guardarUltimaSincronizacion(epochMillis: Long) {
         q.guardarUltimaSincronizacion(epochMillis)
     }
 
-    fun pendientes(): List<Labor> =
+    override fun pendientes(): List<Labor> =
         q.listarPendientes()
             .executeAsList()
             .map { it.aLabor() }
 
-    fun guardarPendiente(labor: Labor): Labor {
+    override fun guardarPendiente(labor: Labor): Labor {
         val menor = q.siguienteIdLocal().executeAsOne()
         val id = minOf(menor, 0L) - 1L
         val pendiente = labor.copy(
@@ -102,13 +102,13 @@ class AgroLocal(private val db: AgroDb) {
         return pendiente
     }
 
-    fun guardarEdicion(labor: Labor): Labor {
+    override fun guardarEdicion(labor: Labor): Labor {
         val pendiente = labor.copy(pendiente = true)
         guardarLabor(pendiente)
         return pendiente
     }
 
-    fun confirmar(
+    override fun confirmar(
         original: Labor,
         definitiva: Labor
     ) {
@@ -118,11 +118,11 @@ class AgroLocal(private val db: AgroDb) {
         }
     }
 
-    fun eliminar(id: Long) {
+    override fun eliminar(id: Long) {
         q.borrarLaborPorId(id)
     }
 
-    fun actualizarDesdeServidor(
+    override fun actualizarDesdeServidor(
         lotes: List<Lote>,
         labores: List<Labor>
     ) {
