@@ -7,7 +7,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import pe.upeu.agrosierra.data.repository.AgroRepositorioOffline
+import pe.upeu.agrosierra.domain.repository.AgroRepositorio
+import pe.upeu.agrosierra.domain.usecase.BuscarLotesAgroUseCase
+import pe.upeu.agrosierra.domain.usecase.RegistrarLaborAgroUseCase
+import pe.upeu.agrosierra.domain.usecase.SincronizarAgroUseCase
 import pe.upeu.agrosierra.domain.platform.MonitorConectividad
 import pe.upeu.agrosierra.domain.model.*
 import pe.upeu.agrosierra.data.remote.ErrorAgroException
@@ -22,8 +25,11 @@ sealed interface AgroUiState {
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AgroViewModel(
-    private val repo: AgroRepositorioOffline,
-    private val conectividad: MonitorConectividad
+    private val repo: AgroRepositorio,
+    private val conectividad: MonitorConectividad,
+    private val buscarLotes: BuscarLotesAgroUseCase,
+    private val registrarLabor: RegistrarLaborAgroUseCase,
+    private val sincronizarAgro: SincronizarAgroUseCase
 ) : ViewModel() {
 
     // La primera conexion carga datos; volver desde sin red sincroniza pendientes.
@@ -39,7 +45,7 @@ class AgroViewModel(
     private suspend fun sincronizarInternamente() {
         _estado.value = AgroUiState.Cargando
         try {
-            val resultado = repo.sincronizar()
+            val resultado = sincronizarAgro()
             _estado.value = AgroUiState.Exito(
                 "Enviados: ${resultado.enviados}, lotes: ${resultado.lotesRecibidos}, " +
                     "labores: ${resultado.laboresRecibidas}"
@@ -71,7 +77,7 @@ class AgroViewModel(
                 texto, v, abiertas ->
             Triple(texto, v, abiertas)
         }.flatMapLatest { (texto, v, abiertas) ->
-            repo.buscarLotes(texto, v, abiertas)
+            buscarLotes(texto, v, abiertas)
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
@@ -114,7 +120,7 @@ class AgroViewModel(
 
     fun registrar(labor: Labor) {
         ejecutar {
-            repo.registrar(labor)
+            registrarLabor(labor)
             "Labor guardada como pendiente"
         }
     }
