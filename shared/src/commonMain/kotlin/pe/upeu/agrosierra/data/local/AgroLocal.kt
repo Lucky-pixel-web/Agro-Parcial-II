@@ -3,6 +3,7 @@ package pe.upeu.agrosierra.data.local
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import app.cash.sqldelight.coroutines.mapToOneOrNull
 import app.cash.sqldelight.coroutines.mapToOne
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -75,6 +76,15 @@ class AgroLocal(private val db: AgroDb) {
                     fila.loteId to fila.totalPendientes
                 }
             }
+
+    fun observarUltimaSincronizacion(): Flow<Long?> =
+        q.observarUltimaSincronizacion()
+            .asFlow()
+            .mapToOneOrNull(Dispatchers.Default)
+
+    fun guardarUltimaSincronizacion(epochMillis: Long) {
+        q.guardarUltimaSincronizacion(epochMillis)
+    }
 
     fun pendientes(): List<Labor> =
         q.listarPendientes()
