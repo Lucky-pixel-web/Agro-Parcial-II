@@ -39,8 +39,8 @@ class AgroLocal(private val db: AgroDb) {
         soloAbiertas: Boolean
     ): Flow<List<Lote>> =
         q.buscarLotes(
-            texto = texto,
-            valleFiltro = valle,
+            texto = texto.trim(),
+            valleFiltro = valle.trim(),
             soloAbiertas = if (soloAbiertas) 1L else 0L
         ).asFlow()
             .mapToList(Dispatchers.Default)

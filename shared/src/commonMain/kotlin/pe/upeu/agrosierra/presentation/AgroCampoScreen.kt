@@ -138,6 +138,20 @@ fun AgroCampoScreen(
                 )
             }
 
+            TextButton(
+                onClick = {
+                    texto = ""
+                    valle = ""
+                    abiertas = false
+
+                    vm.cambiarBusqueda("")
+                    vm.cambiarValle("")
+                    vm.cambiarSoloAbiertas(false)
+                }
+            ) {
+                Text("Limpiar filtros")
+            }
+
             if (lotes.isEmpty()) {
                 Text("No hay lotes almacenados.")
             }
