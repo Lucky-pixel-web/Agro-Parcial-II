@@ -10,12 +10,14 @@ import kotlinx.coroutines.launch
 import pe.upeu.agrosierra.data.repository.AgroRepositorioOffline
 import pe.upeu.agrosierra.domain.platform.MonitorConectividad
 import pe.upeu.agrosierra.domain.model.*
+import pe.upeu.agrosierra.data.remote.ErrorAgroException
+import pe.upeu.agrosierra.data.remote.mensajeParaUsuario
 
 sealed interface AgroUiState {
     data object Listo : AgroUiState
     data object Cargando : AgroUiState
     data class Exito(val mensaje: String) : AgroUiState
-    data class Error(val mensaje: String) : AgroUiState
+    data class Error(val mensaje: String, val campos: Map<String, String> = emptyMap()) : AgroUiState
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -44,6 +46,9 @@ class AgroViewModel(
             )
         } catch (e: CancellationException) {
             throw e
+        } catch (e: ErrorAgroException) {
+            val campos = (e.detalle as? ErrorApi.Validacion)?.errores.orEmpty()
+            _estado.value = AgroUiState.Error(e.detalle.mensajeParaUsuario(), campos)
         } catch (e: Exception) {
             _estado.value = AgroUiState.Error(
                 e.message ?: "No se pudo sincronizar; los datos locales siguen disponibles"
@@ -147,6 +152,9 @@ class AgroViewModel(
                     AgroUiState.Exito(operacion())
             } catch (e: CancellationException) {
                 throw e
+            } catch (e: ErrorAgroException) {
+                val campos = (e.detalle as? ErrorApi.Validacion)?.errores.orEmpty()
+                _estado.value = AgroUiState.Error(e.detalle.mensajeParaUsuario(), campos)
             } catch (e: Exception) {
                 _estado.value = AgroUiState.Error(
                     e.message ?: "No se pudo completar la operación"
