@@ -17,9 +17,12 @@ import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriverAndroid
 import pe.edu.upeu.pharmamobil.domain.repository.AlmacenSincronizacion
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import pe.upeu.agrosierra.db.AgroDb
+import pe.upeu.agrosierra.domain.platform.MonitorConectividad
+import pe.upeu.agrosierra.platform.MonitorConectividadAndroid
 
 actual val platformModule: Module = module {
     single<HttpClientEngine> { OkHttp.create() }
+    single<MonitorConectividad> { MonitorConectividadAndroid(androidContext()) }
     single(named("urlBase")) { "http://10.0.2.2:8080/api/v1/" }
     single<Compartidor> { CompartidorAndroid(androidContext()) }
     single<AlmacenSeguro> { AlmacenSeguroAndroid(androidContext()) }
