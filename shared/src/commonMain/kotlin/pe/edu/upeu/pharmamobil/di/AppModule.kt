@@ -82,7 +82,7 @@ val presentationModule = module {
     viewModel { ClienteViewModel(get(), get()) }
     viewModel { DetalleProductoViewModel(get(), get()) }
     viewModel { SesionViewModel(get(), get(), get(), get()) }
-    viewModel { AgroViewModel(get()) }
+    viewModel { AgroViewModel(get(), get()) }
 }
 
 expect val platformModule: Module
