@@ -3,64 +3,59 @@ package pe.upeu.agrosierra.data.repository
 
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import pe.upeu.agrosierra.data.local.AgroLocal
-import pe.upeu.agrosierra.data.remote.AgroApi
+import pe.upeu.agrosierra.data.local.AlmacenAgroLocal
+import pe.upeu.agrosierra.data.remote.ServicioAgroRemoto
+import pe.upeu.agrosierra.domain.repository.AgroRepositorio
 import pe.upeu.agrosierra.domain.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Clock
 
-data class ResumenSincronizacion(
-    val enviados: Int,
-    val lotesRecibidos: Int,
-    val laboresRecibidas: Int
-)
-
 class AgroRepositorioOffline(
-    private val local: AgroLocal,
-    private val remoto: AgroApi
-) {
+    private val local: AlmacenAgroLocal,
+    private val remoto: ServicioAgroRemoto
+) : AgroRepositorio {
 
     private val mutex = Mutex()
 
-    fun observarUltimaSincronizacion(): Flow<Long?> =
+    override fun observarUltimaSincronizacion(): Flow<Long?> =
         local.observarUltimaSincronizacion()
 
-    fun observarLotes(): Flow<List<Lote>> =
+    override fun observarLotes(): Flow<List<Lote>> =
         local.observarLotes()
 
-    fun buscarLotes(
+    override fun buscarLotes(
         texto: String,
         valle: String,
         soloAbiertas: Boolean
     ): Flow<List<Lote>> =
         local.buscarLotes(texto, valle, soloAbiertas)
 
-    fun observarLabores(loteId: Long): Flow<List<Labor>> =
+    override fun observarLabores(loteId: Long): Flow<List<Labor>> =
         local.observarLabores(loteId)
 
-    fun contarPendientes(loteId: Long): Flow<Long> =
+    override fun contarPendientes(loteId: Long): Flow<Long> =
         local.contarPendientes(loteId)
 
-    fun observarPendientesPorLotes(): Flow<Map<Long, Long>> =
+    override fun observarPendientesPorLotes(): Flow<Map<Long, Long>> =
         local.observarPendientesPorLotes()
 
-    fun registrar(labor: Labor): Labor =
+    override fun registrar(labor: Labor): Labor =
         local.guardarPendiente(labor)
 
-    fun corregir(labor: Labor): Labor =
+    override fun corregir(labor: Labor): Labor =
         local.guardarEdicion(labor)
 
-    suspend fun eliminar(id: Long) {
+    override suspend fun eliminar(id: Long) {
         if (id > 0L) {
             remoto.eliminarLabor(id)
         }
         local.eliminar(id)
     }
 
-    suspend fun cerrarCampania(id: Long): Lote =
+    override suspend fun cerrarCampania(id: Long): Lote =
         remoto.cerrarCampania(id)
 
-    suspend fun sincronizar(): ResumenSincronizacion =
+    override suspend fun sincronizar(): ResumenSincronizacion =
         mutex.withLock {
 
             var enviados = 0
