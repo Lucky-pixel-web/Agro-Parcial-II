@@ -13,7 +13,7 @@ class AgroApi(private val cliente: HttpClient) {
         tamanio: Int = 20,
         valle: String? = null,
         campaniaCerrada: Boolean? = null
-    ): PaginaAgroDto<LoteDto> =
+    ): PaginaAgroDto<LoteDto> = controlarErrorAgro {
         cliente.get("lotes") {
             parameter("pagina", pagina)
             parameter("tamanio", tamanio)
@@ -22,38 +22,43 @@ class AgroApi(private val cliente: HttpClient) {
                 parameter("campaniaCerrada", it)
             }
         }.body()
+    }
 
-    suspend fun obtenerLote(id: Long): Lote =
-        cliente.get("lotes/$id")
-            .body<LoteDto>().aDominio()
+    suspend fun obtenerLote(id: Long): Lote = controlarErrorAgro {
+        cliente.get("lotes/$id").body<LoteDto>().aDominio()
+    }
 
     suspend fun listarLabores(
         loteId: Long,
         pagina: Int = 0,
         tamanio: Int = 20
-    ): PaginaAgroDto<LaborDto> =
+    ): PaginaAgroDto<LaborDto> = controlarErrorAgro {
         cliente.get("lotes/$loteId/labores") {
             parameter("pagina", pagina)
             parameter("tamanio", tamanio)
         }.body()
+    }
 
-    suspend fun crearLabor(labor: Labor): Labor =
+    suspend fun crearLabor(labor: Labor): Labor = controlarErrorAgro {
         cliente.post("labores") {
             setBody(labor.aSolicitud())
         }.body<LaborDto>().aDominio()
+    }
 
-    suspend fun actualizarLabor(labor: Labor): Labor =
+    suspend fun actualizarLabor(labor: Labor): Labor = controlarErrorAgro {
         cliente.put("labores/${labor.id}") {
             setBody(labor.aSolicitud())
         }.body<LaborDto>().aDominio()
-
-    suspend fun eliminarLabor(id: Long) {
-        cliente.delete("labores/$id")
     }
 
-    suspend fun cerrarCampania(id: Long): Lote =
-        cliente.post("lotes/$id/cerrar-campania")
-            .body<LoteDto>().aDominio()
+    suspend fun eliminarLabor(id: Long) = controlarErrorAgro {
+        cliente.delete("labores/$id")
+        Unit
+    }
+
+    suspend fun cerrarCampania(id: Long): Lote = controlarErrorAgro {
+        cliente.post("lotes/$id/cerrar-campania").body<LoteDto>().aDominio()
+    }
 
     suspend fun descargarTodosLosLotes(): List<Lote> {
         val resultado = mutableListOf<Lote>()
