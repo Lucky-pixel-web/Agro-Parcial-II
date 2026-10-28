@@ -38,9 +38,7 @@ fun AgroCampoScreen(
     var valle by remember { mutableStateOf("") }
     var abiertas by remember { mutableStateOf(false) }
 
-    LaunchedEffect(sesion.usuario) {
-        vm.sincronizar()
-    }
+    // El ViewModel sincroniza al detectar conexion o reconexion.
 
     Column(
         Modifier.fillMaxSize().padding(16.dp)
