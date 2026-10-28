@@ -15,6 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
 import pe.upeu.agrosierra.domain.model.*
 import pe.edu.upeu.pharmamobil.domain.model.Sesion
+import kotlin.time.Instant
 
 @Composable
 fun AgroCampoScreen(
@@ -29,6 +30,7 @@ fun AgroCampoScreen(
     val pendientesPorLote by
     vm.pendientesPorLote.collectAsStateWithLifecycle()
     val estado by vm.estado.collectAsStateWithLifecycle()
+    val ultimaSincronizacion by vm.ultimaSincronizacion.collectAsStateWithLifecycle()
 
     var seleccionado by remember {
         mutableStateOf<Lote?>(null)
@@ -51,6 +53,14 @@ fun AgroCampoScreen(
         )
 
         Text("Usuario: ${sesion.usuario}")
+        Text(
+            text = ultimaSincronizacion?.let { instante ->
+                "Última sincronización: " +
+                    Instant.fromEpochMilliseconds(instante).toString()
+                        .replace('T', ' ').replace("Z", " UTC")
+            } ?: "Última sincronización: todavía no realizada",
+            style = MaterialTheme.typography.bodySmall
+        )
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
