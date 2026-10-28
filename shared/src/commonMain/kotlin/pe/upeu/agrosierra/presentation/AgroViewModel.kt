@@ -78,6 +78,14 @@ class AgroViewModel(
             emptyList()
         )
 
+    val ultimaSincronizacion: StateFlow<Long?> =
+        repo.observarUltimaSincronizacion()
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5000),
+                null
+            )
+
     val pendientesPorLote: StateFlow<Map<Long, Long>> =
         repo.observarPendientesPorLotes()
             .stateIn(
