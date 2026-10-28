@@ -8,6 +8,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import pe.upeu.agrosierra.data.repository.AgroRepositorioOffline
+import pe.upeu.agrosierra.domain.platform.MonitorConectividad
 import pe.upeu.agrosierra.domain.model.*
 
 sealed interface AgroUiState {
@@ -19,8 +20,36 @@ sealed interface AgroUiState {
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AgroViewModel(
-    private val repo: AgroRepositorioOffline
+    private val repo: AgroRepositorioOffline,
+    private val conectividad: MonitorConectividad
 ) : ViewModel() {
+
+    // La primera conexion carga datos; volver desde sin red sincroniza pendientes.
+    init {
+        viewModelScope.launch {
+            conectividad.observar()
+                .distinctUntilChanged()
+                .filter { it }
+                .collect { sincronizarInternamente() }
+        }
+    }
+
+    private suspend fun sincronizarInternamente() {
+        _estado.value = AgroUiState.Cargando
+        try {
+            val resultado = repo.sincronizar()
+            _estado.value = AgroUiState.Exito(
+                "Enviados: ${resultado.enviados}, lotes: ${resultado.lotesRecibidos}, " +
+                    "labores: ${resultado.laboresRecibidas}"
+            )
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            _estado.value = AgroUiState.Error(
+                e.message ?: "No se pudo sincronizar; los datos locales siguen disponibles"
+            )
+        }
+    }
 
     private val busqueda = MutableStateFlow("")
     private val valle = MutableStateFlow("")
@@ -100,12 +129,7 @@ class AgroViewModel(
     }
 
     fun sincronizar() {
-        ejecutar {
-            val resultado = repo.sincronizar()
-            "Enviados: ${resultado.enviados}, " +
-                    "lotes: ${resultado.lotesRecibidos}, " +
-                    "labores: ${resultado.laboresRecibidas}"
-        }
+        viewModelScope.launch { sincronizarInternamente() }
     }
 
     fun limpiarMensaje() {
