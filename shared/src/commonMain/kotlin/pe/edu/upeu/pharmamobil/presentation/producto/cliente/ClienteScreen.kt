@@ -1,147 +1,274 @@
 package pe.edu.upeu.pharmamobil.presentation.cliente
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import kotlin.random.Random
-import pe.edu.upeu.pharmamobil.domain.model.Cliente
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import pe.edu.upeu.pharmamobil.presentation.components.EstadoVacio
+import pe.edu.upeu.pharmamobil.presentation.components.MensajeExito
+import pe.edu.upeu.pharmamobil.presentation.components.ValidatedTextField
 
 @Composable
-fun ClienteScreen() {
+fun ClienteScreen(
+    viewModel: ClienteViewModel,
+    modifier: Modifier = Modifier
+) {
 
-    var nombre by remember { mutableStateOf("") }
-    var correo by remember { mutableStateOf("") }
-    var telefono by remember { mutableStateOf("") }
-
-    var nombreError by remember { mutableStateOf<String?>(null) }
-    var correoError by remember { mutableStateOf<String?>(null) }
-    var telefonoError by remember { mutableStateOf<String?>(null) }
-
-    var mensajeExito by remember { mutableStateOf<String?>(null) }
-
-    val clientesRegistrados = remember { mutableStateListOf<Cliente>() }
-    var mostrarLista by remember { mutableStateOf(false) }
-
-    fun validar(): Boolean {
-
-        nombreError = ClienteValidator.validarNombre(nombre)
-        correoError = ClienteValidator.validarCorreo(correo)
-        telefonoError = ClienteValidator.validarTelefono(telefono)
-
-        return nombreError == null && correoError == null && telefonoError == null
-    }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
-        Text("PharmaMobil")
-        Text("Registro de Cliente")
-
-        OutlinedTextField(
-            value = nombre,
-            onValueChange = { nombre = it },
-            label = { Text("Nombre") },
-            isError = nombreError != null,
-            supportingText = { nombreError?.let { Text(it) } },
-            modifier = Modifier.fillMaxWidth()
+        FormularioClienteCard(
+            formulario = uiState.formulario,
+            registrando = uiState.registrando,
+            onNombreChange = viewModel::onNombreChange,
+            onCorreoChange = viewModel::onCorreoChange,
+            onTelefonoChange = viewModel::onTelefonoChange,
+            onRegistrar = viewModel::registrar
         )
 
-        OutlinedTextField(
-            value = correo,
-            onValueChange = { correo = it },
-            label = { Text("Correo") },
-            isError = correoError != null,
-            supportingText = { correoError?.let { Text(it) } },
-            modifier = Modifier.fillMaxWidth()
-        )
+        uiState.mensajeExito?.let {
+            MensajeExito(it)
+        }
 
-        OutlinedTextField(
-            value = telefono,
-            onValueChange = { nuevo ->
-                if (nuevo.all { it.isDigit() }) telefono = nuevo
-            },
-            label = { Text("Teléfono") },
-            isError = telefonoError != null,
-            supportingText = { telefonoError?.let { Text(it) } },
-            modifier = Modifier.fillMaxWidth()
-        )
+        EncabezadoCartera(uiState.fase)
 
-        Button(
-            onClick = {
-                mensajeExito = null
-                if (validar()) {
-                    val nuevoCliente = Cliente(
-                        id = Random.nextLong(1, Long.MAX_VALUE),
-                        nombre = nombre,
-                        correo = correo,
-                        telefono = telefono
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+
+            when (val fase = uiState.fase) {
+
+                ClienteUiState.Fase.Cargando ->
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+
+                        CircularProgressIndicator()
+
+                        Text(
+                            text = "Cargando clientes…",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                ClienteUiState.Fase.SinClientes ->
+                    EstadoVacio(
+                        icono = Icons.Default.Group,
+                        titulo = "Todavía no hay clientes",
+                        descripcion = "Registra el primero con el formulario de arriba.",
+                        modifier = Modifier.align(Alignment.Center)
                     )
-                    clientesRegistrados.add(0, nuevoCliente)
-                    mensajeExito = "Cliente \"$nombre\" registrado correctamente"
-                    nombre = ""
-                    correo = ""
-                    telefono = ""
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Registrar")
-        }
 
-        mensajeExito?.let {
-            Text(it)
-        }
-        OutlinedButton(
-            onClick = { mostrarLista = !mostrarLista },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                if (mostrarLista) "Ocultar registrados (${clientesRegistrados.size})"
-                else "Ver clientes registrados (${clientesRegistrados.size})"
-            )
-        }
-
-        AnimatedVisibility(
-            visible = mostrarLista,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
-            LazyColumn(modifier = Modifier.fillMaxWidth().height(240.dp)) {
-                items(clientesRegistrados) { c ->
-                    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text(c.nombre)
-                            Text("${c.correo}  ·  Tel: ${c.obtenerTelefono()}")
+                is ClienteUiState.Fase.ConClientes ->
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(
+                            items = fase.clientes,
+                            key = { it.id }
+                        ) { cliente ->
+                            ClienteItem(cliente)
                         }
                     }
-                }
+
+                is ClienteUiState.Fase.Error ->
+                    EstadoVacio(
+                        icono = Icons.Default.CloudOff,
+                        titulo = "No pudimos cargar los clientes",
+                        descripcion = fase.mensaje,
+                        colorIcono = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.Center),
+                        accion = {
+                            FilledTonalButton(onClick = viewModel::cargarClientes) {
+                                Text("Reintentar")
+                            }
+                        }
+                    )
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun FormularioClienteCard(
+    formulario: FormularioCliente,
+    registrando: Boolean,
+    onNombreChange: (String) -> Unit,
+    onCorreoChange: (String) -> Unit,
+    onTelefonoChange: (String) -> Unit,
+    onRegistrar: () -> Unit
+) {
+
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            Text(
+                text = "Registrar cliente",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            ValidatedTextField(
+                value = formulario.nombre,
+                onValueChange = onNombreChange,
+                label = "Nombre",
+                error = formulario.nombreError,
+                leadingIcon = Icons.Default.Person,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            ValidatedTextField(
+                value = formulario.correo,
+                onValueChange = onCorreoChange,
+                label = "Correo",
+                error = formulario.correoError,
+                leadingIcon = Icons.Default.Email,
+                keyboardType = KeyboardType.Email,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            ValidatedTextField(
+                value = formulario.telefono,
+                onValueChange = onTelefonoChange,
+                label = "Teléfono",
+                error = formulario.telefonoError,
+                leadingIcon = Icons.Default.Phone,
+                ayuda = "Opcional, entre 6 y 9 dígitos",
+                keyboardType = KeyboardType.Phone,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Button(
+                onClick = onRegistrar,
+                enabled = !registrando,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (registrando) "Registrando…" else "Registrar")
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun EncabezadoCartera(
+    fase: ClienteUiState.Fase
+) {
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        Text(
+            text = "Cartera",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.weight(1f)
+        )
+
+        if (fase is ClienteUiState.Fase.ConClientes) {
+
+            val cantidad = fase.clientes.size
+
+            Text(
+                text = if (cantidad == 1) "1 cliente" else "$cantidad clientes",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun ClienteItem(
+    cliente: ClienteUi
+) {
+
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            ) {
+
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .size(20.dp)
+                )
+            }
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Text(
+                    text = cliente.nombre,
+                    style = MaterialTheme.typography.titleSmall
+                )
+
+                Text(
+                    text = "${cliente.correo}  ·  ${cliente.telefono}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
